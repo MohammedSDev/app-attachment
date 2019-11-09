@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="appAttachmentDialogCameraBtn" type="id" />
+    <item name="appAttachmentDialogGalleryBtn" type="id" />
+    <item name="appAttachmentDialogOtherBtn" type="id" />
+
+</resources>

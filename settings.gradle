@@ -1,0 +1,2 @@
+include ':app', ':appattachment'
+rootProject.name='AttachmentDialogDemo'
