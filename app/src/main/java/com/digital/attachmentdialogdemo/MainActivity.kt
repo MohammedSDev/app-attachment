@@ -73,4 +73,14 @@ class MainActivity : AppCompatActivity() {
         println("ACtivity.onActivityResult")
         println("ACtivity.onActivityResult")
     }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        println("onRequestPermissionsResult----------$requestCode")
+        AppAttachmentDialog.onRequestPermissionsResult(requestCode,permissions,grantResults,this)
+    }
 }
