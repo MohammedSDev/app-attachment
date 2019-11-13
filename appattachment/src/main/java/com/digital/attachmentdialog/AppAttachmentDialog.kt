@@ -1,6 +1,7 @@
 package com.digital.attachmentdialog
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -12,19 +13,21 @@ import androidx.annotation.LayoutRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import java.io.File
 import com.digital.attachmentdialog.AppAttachmentType.*
 
 enum class AppAttachmentType {
-    CAMERA, GALLERY, OTHER,ALL
+    CAMERA, GALLERY, OTHER, ALL
 }
 
-class AppAttachmentDialogConfig{
+class AppAttachmentDialogConfig {
     var cameraPictureFile: File? = null
-    var authority = ""
+    var authority: String? = null
     var requestCode: Int = -1
     var dismissAfterClick = true
+    var requestWithAtMost = true
 
 }
 
@@ -44,12 +47,19 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
     private val cameraPictureFile: File
         get() {
             if (AppAttachmentDialog.cameraPictureFile == null)
-                AppAttachmentDialog.cameraPictureFile = config.cameraPictureFile ?:
-                    File(activity?.cacheDir, "pic_${System.currentTimeMillis()}.jpg")
+                AppAttachmentDialog.cameraPictureFile = config.cameraPictureFile ?: File(
+                    activity?.cacheDir,
+                    "pic_${System.currentTimeMillis()}.jpg"
+                )
             return AppAttachmentDialog.cameraPictureFile!!
         }
-    private val authority
-        get() = if (config.authority.isEmpty()) context?.packageName + ".fileprovider" else config.authority
+    private val authority: String
+        get() {
+            if (AppAttachmentDialog.authority.isEmpty())
+                AppAttachmentDialog.authority =
+                    config.authority ?: context?.packageName + ".fileprovider"
+            return AppAttachmentDialog.authority
+        }
 
 //    var requestCode: Int = -1
 //    var dismissAfterClick = true
@@ -58,7 +68,7 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
     private var onResultCB: ((code: Int, file: File?) -> Unit)? = null
     private var explainRequired: ((permission: String, reTry: () -> Unit) -> Unit)? = null
 
-    fun prepare(block:AppAttachmentDialogConfig.()->Unit):AppAttachmentDialog{
+    fun prepare(block: AppAttachmentDialogConfig.() -> Unit): AppAttachmentDialog {
         block(config)
         return this
     }
@@ -83,6 +93,7 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
 
 
         private var cameraPictureFile: File? = null
+        private var authority: String = ""
 
         fun onActivityResult(
             requestCode: Int,
@@ -97,7 +108,7 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
 
                     requestCode == OPEN_CAMERA_REQUEST ||
                             requestCode and activityReqCodeMask == OPEN_CAMERA_REQUEST ->
-                        onResult.invoke(requestCode,cameraPictureFile)
+                        onResult.invoke(requestCode, cameraPictureFile)
                     requestCode == OPEN_GALLARY_REQUEST ||
                             requestCode and activityReqCodeMask == OPEN_GALLARY_REQUEST -> {
                         if (data == null) {
@@ -129,19 +140,73 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
 
 
         }
+
+        fun onRequestPermissionsResult(
+            requestCode: Int,
+            permissions: Array<out String>,
+            grantResults: IntArray,
+            activity: Activity?,
+            fragment: Fragment? = null
+        ) {
+            //mask: 0xffff
+            when {
+                requestCode == CAMERA_PERMISSION_REQUEST_CODE ||
+                        requestCode and 0xffff == CAMERA_PERMISSION_REQUEST_CODE -> {
+                    if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                        // permission was granted, yay! Do the
+                        // contacts-related task you need to do.
+                        if (activity == null) return
+                        openCamera(
+                            activity,
+                            OPEN_CAMERA_REQUEST,
+                            authority,
+                            cameraPictureFile!!,
+                            fragment
+                        )
+                    } else {
+                        // permission denied, boo! Disable the
+                        // functionality that depends on this permission.
+                    }
+                    return
+                }
+                requestCode == GALLERY_PERMISSION_REQUEST_CODE ||
+                        requestCode and 0xffff == GALLERY_PERMISSION_REQUEST_CODE -> {
+                    if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                        // permission was granted, yay! Do the
+                        // contacts-related task you need to do.
+                        if (activity == null) return
+                        openGallery(activity, OPEN_GALLARY_REQUEST)
+                    } else {
+                        // permission denied, boo! Disable the
+                        // functionality that depends on this permission.
+                    }
+                    return
+                }
+                requestCode == OTHER_PERMISSION_REQUEST_CODE ||
+                        requestCode and 0xffff == OTHER_PERMISSION_REQUEST_CODE -> {
+                    if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                        // permission was granted, yay! Do the
+                        // contacts-related task you need to do.
+                        if (activity == null) return
+                        openFileManager(activity, OPEN_OTHER_REQUEST, fragment)
+                    } else {
+                        // permission denied, boo! Disable the
+                        // functionality that depends on this permission.
+                    }
+                    return
+                }
+            }
+        }
+
     }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        println()
-        println()
-        println()
-        println(context?.packageName)
-        println()
-        println()
 //        setStyle(STYLE_NO_TITLE,R.style.Dialog)
+        //call mCameraFile & authority to update companion object key values
+        cameraPictureFile
+        authority
     }
 
     override fun onCreateView(
@@ -206,20 +271,10 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
         if (ContextCompat.checkSelfPermission(mContext, permission)
             != PackageManager.PERMISSION_GRANTED
         ) {
-            println("to req")
-            println("to req")
-            println("to req")
-            println(permission)
-            println("to req")
-            println("to req")
-
 
             // Permission is not granted
             // Should we show an explanation?
             if (shouldShowRequestPermissionRationale(permission)) {
-                println("shouldShowRequestPermissionRationale")
-                println("shouldShowRequestPermissionRationale")
-                println("shouldShowRequestPermissionRationale")
                 // Show an explanation to the user *asynchronously* -- don't block
                 // this thread waiting for the user's response! After the user
                 // sees the explanation, try again to request the permission.
@@ -235,10 +290,6 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
                 )
 
             } else {
-                println("just request permission")
-                println("just request permission")
-                println("just request permission")
-                println("just request permission")
                 // No explanation needed, we can request the permission.
                 requestPermissions(
                     arrayOf(permission),
@@ -258,16 +309,17 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
     override fun onStart() {
         super.onStart()
 
-        dialog?.let {
-            val lp = WindowManager.LayoutParams()
-            lp.copyFrom(it.window!!.attributes)
-            lp.height = WindowManager.LayoutParams.WRAP_CONTENT
-            lp.width = (context!!.resources.displayMetrics.widthPixels * 0.91).toInt()
-            //set dialog bottom
-            lp.gravity = Gravity.CENTER
-            it.window?.attributes = lp
+        if (config.requestWithAtMost)
+            dialog?.let {
+                val lp = WindowManager.LayoutParams()
+                lp.copyFrom(it.window!!.attributes)
+                lp.height = WindowManager.LayoutParams.WRAP_CONTENT
+                lp.width = (context!!.resources.displayMetrics.widthPixels * 0.91).toInt()
+                //set dialog bottom
+                lp.gravity = Gravity.CENTER
+                it.window?.attributes = lp
 //            it.window?.setBackgroundDrawable(ColorDrawable(Color.YELLOW))
-        }
+            }
     }
 
     override fun show(manager: FragmentManager, tag: String?) {
@@ -288,51 +340,7 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-        println("onRequestPermissionsResult")
-        println("onRequestPermissionsResult")
-        println("onRequestPermissionsResult")
-        println("onRequestPermissionsResult")
-        when (requestCode) {
-            CAMERA_PERMISSION_REQUEST_CODE -> {
-                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                    openCamera(
-                        activity!!,
-                        OPEN_CAMERA_REQUEST,
-                        authority,
-                        cameraPictureFile!!,
-                        this
-                    )
-                } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                }
-                return
-            }
-            GALLERY_PERMISSION_REQUEST_CODE -> {
-                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                    openGallery(activity!!, OPEN_GALLARY_REQUEST, this)
-                } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                }
-                return
-            }
-            OTHER_PERMISSION_REQUEST_CODE -> {
-                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                    openFileManager(activity!!, OPEN_OTHER_REQUEST, this)
-                } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                }
-                return
-            }
-        }
+        Companion.onRequestPermissionsResult(requestCode, permissions, grantResults, activity, this)
     }
 
 
@@ -343,38 +351,6 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
 
 
     }
-
-    /*
-    *         if (resultCode == AppCompatActivity.RESULT_OK) {
-            when (requestCode) {
-                OPEN_CAMERA_REQUEST -> onResultCB?.invoke(requestCode, cameraPictureFile)
-                OPEN_GALLARY_REQUEST -> {
-                    if (data == null) {
-                        onResultCB?.invoke(requestCode, null)
-                        return
-                    }
-                    val fileAvatar = File(getPath(activity!!, data.data))
-                    onResultCB?.invoke(requestCode, fileAvatar)
-                }
-                OPEN_OTHER_REQUEST -> {
-                    if (data == null) {
-                        onResultCB?.invoke(requestCode, null)
-                        return
-                    }
-
-                    Thread {
-                        val fileAvatar =
-                            File(getDrivePath(activity!!, data.data, context!!.cacheDir))
-                        Handler(Looper.getMainLooper()).post {
-                            onResultCB?.invoke(requestCode, fileAvatar)
-                        }
-                    }.start()
-                }
-            }
-
-
-        }
-    * */
 }
 
 operator fun AppAttachmentDialogConfig.invoke(function: () -> Unit) {
