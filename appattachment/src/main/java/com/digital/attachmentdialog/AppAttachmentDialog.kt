@@ -25,7 +25,8 @@ enum class AppAttachmentType {
 class AppAttachmentDialogConfig {
     var cameraPictureFile: File? = null
     var authority: String? = null
-    var requestCode: Int = -1
+//    var requestCode: Int = -1
+//    internal set
     var dismissAfterClick = true
     var requestWithAtMost = true
 
@@ -331,7 +332,7 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
         requestCode: Int = -1,
         tag: String? = javaClass.simpleName
     ) {
-        config.requestCode = requestCode
+//        config.requestCode = requestCode
         super.show(manager, tag)
     }
 

@@ -14,6 +14,7 @@ import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import java.io.*
 import java.lang.Exception
+import java.net.URLConnection
 
 
 //region Gallery,Camera & files
@@ -21,24 +22,33 @@ import java.lang.Exception
 /**
  * try get file mime type
  * */
-fun getMimeType(context: Context?, url: String): String? {
-    if (url.isNullOrEmpty()) return null
+fun getMimeType(url: String): String? {
+    if (url.isEmpty()) return null
+    val file = File(url)
+    val ins = BufferedInputStream(FileInputStream(file))
+    val mimeType = URLConnection.guessContentTypeFromStream(ins)
+
+    if (mimeType.isNotEmpty())
+        return mimeType
+
     var type: String? = null
-    val uri = Uri.parse(url)
-    if (context != null
+
+    val extension = MimeTypeMap.getFileExtensionFromUrl(url)
+    if (extension != null) {
+        type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase())
+    } else {
+        type = "*/*"
+    }
+    return type
+
+    //val uri = Uri.parse(url)
+    /*if (context != null
         && uri.scheme?.equals(ContentResolver.SCHEME_CONTENT) == true
     ) {
         val cr = context.applicationContext.contentResolver
         type = cr.getType(uri)
-    } else {
-        val extension = MimeTypeMap.getFileExtensionFromUrl(url)
-        if (extension != null) {
-            type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase())
-        } else {
-            type = "*/*"
-        }
     }
-    return type
+    else*/
 }
 
 
@@ -192,9 +202,22 @@ fun getPath(context: Context, uri: Uri?): String? {
 
             if ("primary".equals(type, ignoreCase = true)) {
                 return Environment.getExternalStorageDirectory().absolutePath + "/" + split[1]
+            }else{
+                // TODO handle non-primary volumes
+                //https://stackoverflow.com/questions/11281010/how-can-i-get-external-sd-card-path-for-android-4-0
+                //https://stackoverflow.com/questions/32413305/how-to-get-sdcardsecondary-storage-path-in-android
+
+                println("-------------------------------getPath()")
+                println("-------------------------------getPath()")
+                println("-------------------------------getPath()")
+                println(type)
+                println(split[0])
+                println(split[1])
+                println(split)
+                println(split.toString())
+                println("-------------------------------getPath()")
             }
 
-            // TODO handle non-primary volumes
         } else if (isDownloadsDocument(uri)) {
 
             val id = DocumentsContract.getDocumentId(uri)
