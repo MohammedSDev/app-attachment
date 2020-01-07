@@ -27,7 +27,13 @@ class AppAttachmentDialogConfig {
     var authority: String? = null
 //    var requestCode: Int = -1
 //    internal set
+    /**
+     * dismiss dialog after user choose.
+     * */
     var dismissAfterClick = true
+    /**
+     * make dialog with 0.91% of screen.
+     * */
     var requestWithAtMost = true
 
 }
@@ -153,7 +159,10 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
             when {
                 requestCode == CAMERA_PERMISSION_REQUEST_CODE ||
                         requestCode and 0xffff == CAMERA_PERMISSION_REQUEST_CODE -> {
-                    if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    //for camera we have two permission..
+                    if ((grantResults.isNotEmpty()
+                                && grantResults.first() == PackageManager.PERMISSION_GRANTED
+                                && grantResults.last() == PackageManager.PERMISSION_GRANTED)) {
                         // permission was granted, yay! Do the
                         // contacts-related task you need to do.
                         if (activity == null) return
@@ -235,7 +244,7 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
         val otherBtn = view.findViewById<View?>(R.id.appAttachmentDialogOtherBtn)
         galleryBtn?.setOnClickListener {
             checkPermission(
-                Manifest.permission.READ_EXTERNAL_STORAGE,
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
                 GALLERY_PERMISSION_REQUEST_CODE
             ) {
                 openGallery(activity!!, OPEN_GALLARY_REQUEST, this)
@@ -245,7 +254,7 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
 
         cameraBtn?.setOnClickListener {
             checkPermission(
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.CAMERA),
                 CAMERA_PERMISSION_REQUEST_CODE
             ) {
 
@@ -256,7 +265,7 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
 
         otherBtn?.setOnClickListener {
             checkPermission(
-                Manifest.permission.READ_EXTERNAL_STORAGE,
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
                 OTHER_PERMISSION_REQUEST_CODE
             ) {
 
@@ -267,33 +276,39 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
     }
 
 
-    private fun checkPermission(permission: String, permissionCode: Int, callback: () -> Unit) {
+    private fun checkPermission(permission: Array<String>, permissionCode: Int, callback: () -> Unit) {
         val mContext = activity!!
-        if (ContextCompat.checkSelfPermission(mContext, permission)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
+        var deniedPermission:String = ""
+        permission.forEach {
+            if(ContextCompat.checkSelfPermission(mContext, it)
+                != PackageManager.PERMISSION_GRANTED){
+                deniedPermission = it
+                return@forEach
+            }
+        }
+        if (deniedPermission.isNotEmpty()) {
 
             // Permission is not granted
             // Should we show an explanation?
-            if (shouldShowRequestPermissionRationale(permission)) {
+            if (shouldShowRequestPermissionRationale(deniedPermission)) {
                 // Show an explanation to the user *asynchronously* -- don't block
                 // this thread waiting for the user's response! After the user
                 // sees the explanation, try again to request the permission.
 
-                explainRequired?.invoke(permission) {
+                explainRequired?.invoke(deniedPermission) {
                     requestPermissions(
-                        arrayOf(permission),
+                        permission,
                         permissionCode
                     )
                 } ?: requestPermissions(
-                    arrayOf(permission),
+                    permission,
                     permissionCode
                 )
 
             } else {
                 // No explanation needed, we can request the permission.
                 requestPermissions(
-                    arrayOf(permission),
+                    permission,
                     permissionCode
                 )
                 // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
