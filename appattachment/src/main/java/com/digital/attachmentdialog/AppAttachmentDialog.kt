@@ -41,6 +41,11 @@ class AppAttachmentDialogConfig {
 class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg val attachmentTypes: AppAttachmentType) :
     DialogFragment() {
 
+    constructor(
+        @LayoutRes layoutRes: Int, frag: Fragment, vararg attachmentTypes: AppAttachmentType
+    ) : this(layoutRes, *attachmentTypes) {
+        hostFragment = frag
+    }
 
     private fun View.visible() {
         visibility = View.VISIBLE
@@ -51,6 +56,7 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
     }
 
 
+    private var hostFragment: Fragment? = null
     private val cameraPictureFile: File
         get() {
             if (AppAttachmentDialog.cameraPictureFile == null)
@@ -162,7 +168,8 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
                     //for camera we have two permission..
                     if ((grantResults.isNotEmpty()
                                 && grantResults.first() == PackageManager.PERMISSION_GRANTED
-                                && grantResults.last() == PackageManager.PERMISSION_GRANTED)) {
+                                && grantResults.last() == PackageManager.PERMISSION_GRANTED)
+                    ) {
                         // permission was granted, yay! Do the
                         // contacts-related task you need to do.
                         if (activity == null) return
@@ -247,18 +254,18 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
                 arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
                 GALLERY_PERMISSION_REQUEST_CODE
             ) {
-                openGallery(activity!!, OPEN_GALLARY_REQUEST, this)
+                openGallery(activity!!, OPEN_GALLARY_REQUEST, hostFragment ?: this)
             }
             if (config.dismissAfterClick) dismiss()
         }
 
         cameraBtn?.setOnClickListener {
             checkPermission(
-                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.CAMERA),
+                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA),
                 CAMERA_PERMISSION_REQUEST_CODE
             ) {
 
-                openCamera(activity!!, OPEN_CAMERA_REQUEST, authority, cameraPictureFile!!, this)
+                openCamera(activity!!, OPEN_CAMERA_REQUEST, authority, cameraPictureFile!!, hostFragment ?: this)
             }
             if (config.dismissAfterClick) dismiss()
         }
@@ -269,19 +276,24 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
                 OTHER_PERMISSION_REQUEST_CODE
             ) {
 
-                openFileManager(activity!!, OPEN_OTHER_REQUEST, this)
+                openFileManager(activity!!, OPEN_OTHER_REQUEST, hostFragment ?: this)
             }
             if (config.dismissAfterClick) dismiss()
         }
     }
 
 
-    private fun checkPermission(permission: Array<String>, permissionCode: Int, callback: () -> Unit) {
+    private fun checkPermission(
+        permission: Array<String>,
+        permissionCode: Int,
+        callback: () -> Unit
+    ) {
         val mContext = activity!!
-        var deniedPermission:String = ""
+        var deniedPermission: String = ""
         permission.forEach {
-            if(ContextCompat.checkSelfPermission(mContext, it)
-                != PackageManager.PERMISSION_GRANTED){
+            if (ContextCompat.checkSelfPermission(mContext, it)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
                 deniedPermission = it
                 return@forEach
             }
@@ -296,18 +308,18 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
                 // sees the explanation, try again to request the permission.
 
                 explainRequired?.invoke(deniedPermission) {
-                    requestPermissions(
+                    (hostFragment ?: this).requestPermissions(
                         permission,
                         permissionCode
                     )
-                } ?: requestPermissions(
+                } ?: (hostFragment ?: this).requestPermissions(
                     permission,
                     permissionCode
                 )
 
             } else {
                 // No explanation needed, we can request the permission.
-                requestPermissions(
+                (hostFragment ?: this).requestPermissions(
                     permission,
                     permissionCode
                 )
@@ -356,7 +368,7 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-        Companion.onRequestPermissionsResult(requestCode, permissions, grantResults, activity, this)
+        Companion.onRequestPermissionsResult(requestCode, permissions, grantResults, activity, hostFragment ?: this)
     }
 
 
