@@ -16,32 +16,45 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
 
+        supportFragmentManager.beginTransaction().add(R.id.root,TestFragment()).commit()
 
-        tvOne.setOnClickListener {
-
-//            ActivityCompat.requestPermissions(
-//                this,
-//                arrayOf(Main),
-//                10235
-//            )
-            AppAttachmentDialog(R.layout.attachment_type_dialog_layout
-                ,AppAttachmentType.ALL)
-                .onResult { code, file ->
-                    addImage(file)
-                }
-                .prepare {
-
-                }
-                .onExplainRequired { permission, reTry ->
-                    reTry()
-                }
-                .show(supportFragmentManager,"AppAttachmentDialog")
-        }
+//        tvOne.setOnClickListener {
+//
+//            val path = "Android/data/.nomedia"
+//            val f = File(path)
+//            println("file: ${f.name}")
+//            println("file: ${f.exists()}")
+//            println("file: ${f.length()}")
+//            println("file: ${f.absolutePath}")
+//
+////            ActivityCompat.requestPermissions(
+////                this,
+////                arrayOf(Main),
+////                10235
+////            )
+//            AppAttachmentDialog(R.layout.attachment_type_dialog_layout
+//                ,AppAttachmentType.ALL)
+//                .onResult { code, file ->
+//                    println("onResult called")
+//                    displasyImage(file)
+//                }
+//                .prepare {
+//                    //Optional:you can pass you authority
+//                    //this.authority = ""
+//                    //Optional:you can pass you file
+//                    //this.cameraPictureFile = File("...")
+//                }
+//                .onExplainRequired { permission, reTry ->
+//                    //to show user an explain, then call reTry()
+//                    reTry()
+//                }
+//                .show(supportFragmentManager,"AppAttachmentDialog")
+//        }
 
     }
 
 
-    fun addImage(file:File?){
+    fun displasyImage(file:File?){
         println("file")
         println("$file")
         println("${file?.length()}")
@@ -62,10 +75,11 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (isFinishing) return
-        super.onActivityResult(requestCode, resultCode, data)
-        AppAttachmentDialog.onActivityResult(requestCode,resultCode,data,this) { code, file ->
-            addImage(file)
-        }
+//        AppAttachmentDialog.onActivityResult(requestCode,resultCode,data,this) { code, file ->
+////            if()
+////            displasyImage(file)
+//            displasyImage(file)
+//        }
 
         println("ACtivity.onActivityResult")
         println("ACtivity.onActivityResult")
@@ -74,13 +88,18 @@ class MainActivity : AppCompatActivity() {
         println("ACtivity.onActivityResult")
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        println("onRequestPermissionsResult----------$requestCode")
-        AppAttachmentDialog.onRequestPermissionsResult(requestCode,permissions,grantResults,this)
+
+        println("ACtivity.onRequestPermissionsResult")
+        println("ACtivity.onRequestPermissionsResult")
+        println("ACtivity.onRequestPermissionsResult")
+        println("ACtivity.onRequestPermissionsResult")
+        println("ACtivity.onRequestPermissionsResult")
+        println("ACtivity.onRequestPermissionsResult")
+        println("ACtivity.onRequestPermissionsResult")
+        println("ACtivity.onRequestPermissionsResult")
+        println("ACtivity.onRequestPermissionsResult")
+//        AppAttachmentDialog.onRequestPermissionsResult(requestCode,permissions,grantResults,this)
     }
 }
