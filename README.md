@@ -1,5 +1,6 @@
 # app-attachment
-![Release](https://jitpack.io/v/clickapps-android/app-attachment.svg)
+
+![Release](https://jitpack.io/v/MohammedSDev/app-attachment.svg)
 
 
 App-Attachment is an easy,flexible library for you Android attachment feature, you can use it 
@@ -22,7 +23,8 @@ allprojects {
 in app level build.gradle
 ```gradle
 dependencies {
-        implementation 'com.github.clickapps-android:app-attachment:<last-build>'
+
+        implementation 'com.github.MohammedSDev:app-attachment:1.0.0'
 }
 ```
 
