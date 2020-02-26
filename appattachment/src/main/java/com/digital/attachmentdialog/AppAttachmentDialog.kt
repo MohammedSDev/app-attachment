@@ -5,6 +5,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -17,6 +19,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import java.io.File
 import com.digital.attachmentdialog.AppAttachmentType.*
+import java.io.ByteArrayOutputStream
+import java.io.FileOutputStream
 
 enum class AppAttachmentType {
     CAMERA, GALLERY, OTHER, ALL
@@ -215,6 +219,25 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
             }
         }
 
+        fun compressBitmapFile(filePath: String?, context: Context?, compress: Int): File? {
+            if (filePath.isNullOrEmpty()) return null
+            context ?: return null
+            runCatching {
+                val bitmap = BitmapFactory.decodeFile(filePath)
+                val b3 = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, compress, b3)
+
+                val des = File(context.cacheDir, System.currentTimeMillis().toString())
+                des.createNewFile()
+                val fos = FileOutputStream(des)
+                fos.write(b3.toByteArray())
+                fos.flush()
+                fos.close()
+                return des
+            }
+            return null
+        }
+
     }
 
 
@@ -265,7 +288,13 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
                 CAMERA_PERMISSION_REQUEST_CODE
             ) {
 
-                openCamera(activity!!, OPEN_CAMERA_REQUEST, authority, cameraPictureFile!!, hostFragment ?: this)
+                openCamera(
+                    activity!!,
+                    OPEN_CAMERA_REQUEST,
+                    authority,
+                    cameraPictureFile!!,
+                    hostFragment ?: this
+                )
             }
             if (config.dismissAfterClick) dismiss()
         }
@@ -368,7 +397,13 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-        Companion.onRequestPermissionsResult(requestCode, permissions, grantResults, activity, hostFragment ?: this)
+        Companion.onRequestPermissionsResult(
+            requestCode,
+            permissions,
+            grantResults,
+            activity,
+            hostFragment ?: this
+        )
     }
 
 
