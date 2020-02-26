@@ -1,6 +1,6 @@
 # app-attachment
 
-![Release](https://jitpack.io/v/mobile-android-libraries/app-attachment.svg)
+![Release](https://jitpack.io/v/MohammedSDev/app-attachment.svg)
 
 
 App-Attachment is an easy,flexible library for you Android attachment feature, you can use it 
@@ -20,7 +20,7 @@ allprojects {
   }
 }
 ```
-in app level build.gradle ![Release](https://jitpack.io/v/mobile-android-libraries/app-attachment.svg)
+in app level build.gradle ![Release](https://jitpack.io/v/MohammedSDev/app-attachment.svg)
 ```gradle
 dependencies {
 
@@ -28,8 +28,8 @@ dependencies {
 }
 ```
 
-# How to Ues
-To use as dialog .. you need to provide your layout design & you should use appAttachment ids for each button.
+#How to Ues
+to use as dialog .. you need to provide your layout design.& you should use appAttachment ids for each button.
 ```xml
 <item name="appAttachmentDialogCameraBtn" type="id" />
 <item name="appAttachmentDialogGalleryBtn" type="id" />
@@ -118,7 +118,7 @@ AppAttachmentDialog(R.layout.attachment_type_dialog_layout
           displasyImage(file)
       }
       .prepare {
-          //Optional:you can pass you custom  authority  
+          //Optional:you can pass your custom  authority  
           //this.authority = ""
           //Optional:you can pass your custom file
           //this.cameraPictureFile = File("...")
