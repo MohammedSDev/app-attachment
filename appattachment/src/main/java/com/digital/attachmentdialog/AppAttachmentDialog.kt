@@ -21,9 +21,25 @@ import java.io.File
 import com.digital.attachmentdialog.AppAttachmentType.*
 import java.io.ByteArrayOutputStream
 import java.io.FileOutputStream
+import java.io.Serializable
+import java.util.*
 
-enum class AppAttachmentType {
-    CAMERA, GALLERY, OTHER, ALL
+sealed class AppAttachmentType(val value: Int) : Serializable {
+    object CAMERA : AppAttachmentType(1)
+    object GALLERY : AppAttachmentType(2)
+    object OTHER : AppAttachmentType(3)
+    object ALL : AppAttachmentType(4)
+
+    companion object {
+        fun getByValue(value: Int): AppAttachmentType {
+            return when (value) {
+                CAMERA.value -> CAMERA
+                GALLERY.value -> GALLERY
+                OTHER.value -> OTHER
+                else -> ALL
+            }
+        }
+    }
 }
 
 class AppAttachmentDialogConfig {
@@ -42,8 +58,25 @@ class AppAttachmentDialogConfig {
 
 }
 
-class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg val attachmentTypes: AppAttachmentType) :
+class AppAttachmentDialog() :
     DialogFragment() {
+
+    private val LAYOUT_RES_BUNDLE_KEY = "bun_lay"
+    private val ATTACHMENT_TYPES_INT_ARRAY_BUNDLE_KEY = "bun_typ"
+    private val layoutRes: Int get() = getLayoutFromBundle()
+    private val attachmentTypes: Array<out AppAttachmentType>
+        get() = getAppAttachmentTypesFromBundle() ?: arrayOf(ALL)
+
+
+    constructor(@LayoutRes layoutRes: Int, vararg attachmentTypes: AppAttachmentType) : this() {
+        //save in argument
+        arguments = arguments ?: Bundle()
+        arguments?.putInt(LAYOUT_RES_BUNDLE_KEY, layoutRes)
+        arguments?.putIntArray(
+            ATTACHMENT_TYPES_INT_ARRAY_BUNDLE_KEY,
+            attachmentTypes.map { it.value }.toIntArray()
+        )
+    }
 
     constructor(
         @LayoutRes layoutRes: Int, frag: Fragment, vararg attachmentTypes: AppAttachmentType
@@ -266,6 +299,16 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
             }
     }
 
+    //reset current layoutRes& attachmentType in new bundle
+    //skip update newBundle if args from system, and getLayoutFromBundle,getAttachmentsTypeFromBundle null
+    override fun setArguments(args: Bundle?) {
+        val newBundle = args ?: Bundle()
+        if(getLayoutFromBundle() != -1)
+            newBundle.putInt(LAYOUT_RES_BUNDLE_KEY,getLayoutFromBundle())
+        if(getAppAttachmentTypesFromBundle() != null)
+            newBundle.putIntArray(ATTACHMENT_TYPES_INT_ARRAY_BUNDLE_KEY,getAppAttachmentTypesFromBundle()?.map { it.value }?.toIntArray())
+        super.setArguments(newBundle)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -414,6 +457,20 @@ class AppAttachmentDialog(@LayoutRes private val layoutRes: Int, private vararg 
 
 
     }
+
+
+    /**
+     * getAppAttachmentTypesFromBundle or null
+     * */
+    private fun getAppAttachmentTypesFromBundle() =
+        arguments?.getIntArray(ATTACHMENT_TYPES_INT_ARRAY_BUNDLE_KEY)
+            ?.map { AppAttachmentType.getByValue(it) }?.toTypedArray()
+
+    /**
+     * getLayoutFromBundle or default value `-1`
+     * */
+    private fun getLayoutFromBundle() = arguments?.getInt(LAYOUT_RES_BUNDLE_KEY, -1) ?: -1
+
 }
 
 operator fun AppAttachmentDialogConfig.invoke(function: () -> Unit) {
