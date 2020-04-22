@@ -2,6 +2,8 @@
 
 ![Release](https://jitpack.io/v/MohammedSDev/app-attachment.svg)
 
+<!-- MohammedSDev -->
+<!-- clickapps-android -->
 
 App-Attachment is an easy,flexible library for you Android attachment feature, you can use it 
 as dialog or just api, you can get images, different files from camera,internal storage or google drive.
@@ -20,11 +22,12 @@ allprojects {
   }
 }
 ```
-in app level build.gradle ![Release](https://jitpack.io/v/MohammedSDev/app-attachment.svg)
+in app level build.gradle
+xxx => ![Release](https://jitpack.io/v/MohammedSDev/app-attachment.svg)
 ```gradle
 dependencies {
 
-        implementation 'com.github.MohammedSDev:app-attachment:1.x.x'
+        implementation 'com.github.MohammedSDev:app-attachment:xxx'
 }
 ```
 
@@ -118,12 +121,10 @@ AppAttachmentDialog(R.layout.attachment_type_dialog_layout
           displasyImage(file)
       }
       .prepare {
-          //Optional:you can pass your custom  authority  
+          //Optional:you can pass you authority  
           //this.authority = ""
-          //Optional:you can pass your custom file
+          //Optional:you can pass you file
           //this.cameraPictureFile = File("...")
-          //Note: if your custom file in shared storage.you need to set `requestStorageRunTimePermission` true
-          //this.requestStorageRunTimePermission = true
       }
       .onExplainRequired { permission, reTry ->
           //to show user an explain, then call reTry()
@@ -150,19 +151,7 @@ override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out
 }
 ```
 
-# Notable points
-1- if you have FileProvider in Manifest, yout must use your custom authority or add the fallowning lines in your fileProvider xml resource.
-```xml
-<files-path name="my_images" path="."/>
-<cache-path name="my_cache_images" path="." />
-<external-path name="external" path="." />
-```
-
-2- you can use openCamera,openGallery,openFileManager & getPath apis without `AppAttachmentDialog`.
-
-3- check also compressBitmapFile,scaleDonwImage apis 
-
 # 
-Enjoy using app-attachment library,report any bugs you found, or even drop me an (Arabic/English) email gg.goo.mobile@gmail.com
+Enjoy using app-attachment library,report any bugs you found, or even drop me an email gg.goo.mobile@gmail.com
 
 
