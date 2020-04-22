@@ -1,7 +1,9 @@
 # app-attachment
 
-![Release](https://jitpack.io/v/clickapps-android/app-attachment.svg)
+![Release](https://jitpack.io/v/MohammedSDev/app-attachment.svg)
 
+<!-- MohammedSDev -->
+<!-- clickapps-android -->
 
 App-Attachment is an easy,flexible library for you Android attachment feature, you can use it 
 as dialog or just api, you can get images, different files from camera,internal storage or google drive.
@@ -21,10 +23,11 @@ allprojects {
 }
 ```
 in app level build.gradle
+xxx => ![Release](https://jitpack.io/v/MohammedSDev/app-attachment.svg)
 ```gradle
 dependencies {
 
-        implementation 'com.github.clickapps-android:app-attachment:1.0.0'
+        implementation 'com.github.MohammedSDev:app-attachment:xxx'
 }
 ```
 
