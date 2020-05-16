@@ -57,6 +57,7 @@ class AppAttachmentDialogConfig {
 	/**
 	 * check & request storage runtime permission.
 	 * note: if you specific custom file path in shared storage. set this to true
+	 * fallowing lines
 	 * */
 	var requestStorageRunTimePermission = false
 
@@ -262,26 +263,7 @@ class AppAttachmentDialog() :
 			}
 		}
 
-		fun compressBitmapFile(filePath: String?, context: Context?, compress: Int): File? {
-			if (filePath.isNullOrEmpty()) return null
-			context ?: return null
-			runCatching {
-				val bitmap = BitmapFactory.decodeFile(filePath)
-				val b3 = ByteArrayOutputStream()
-				bitmap.compress(Bitmap.CompressFormat.JPEG, compress, b3)
-
-				val des = File(context.cacheDir, System.currentTimeMillis().toString())
-				des.createNewFile()
-				val fos = FileOutputStream(des)
-				fos.write(b3.toByteArray())
-				fos.flush()
-				fos.close()
-				return des
-			}
-			return null
 		}
-
-	}
 
 
 	override fun onCreate(savedInstanceState: Bundle?) {

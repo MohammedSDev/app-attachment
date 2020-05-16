@@ -341,4 +341,53 @@ private fun isDownloadsDocument(uri: Uri): Boolean {
 private fun isMediaDocument(uri: Uri): Boolean {
 	return "com.android.providers.media.documents" == uri.authority
 }
+
+
+/**
+ * compress bitmap & reduce size
+ * @param compress : output bitmap quality.(max:100)
+ * */
+fun compressBitmapFile(filePath: String?, context: Context?, compress: Int): File? {
+	if (filePath.isNullOrEmpty()) return null
+	context ?: return null
+	runCatching {
+		val bitmap = BitmapFactory.decodeFile(filePath)
+		val b3 = ByteArrayOutputStream()
+		bitmap.compress(Bitmap.CompressFormat.JPEG, compress, b3)
+
+		val des = File(context.cacheDir, System.currentTimeMillis().toString())
+		des.createNewFile()
+		val fos = FileOutputStream(des)
+		fos.write(b3.toByteArray())
+		fos.flush()
+		fos.close()
+		return des
+	}
+	return null
+}
+
+/**
+ * @param targetH
+ * @param targetW
+ * the dimensions of the View
+ * */
+fun scaleDonwImage(imagePath: String, targetW: Int, targetH: Int): Bitmap? {
+	val bmOptions = BitmapFactory.Options().apply {
+		// Get the dimensions of the bitmap
+		inJustDecodeBounds = true
+
+		val photoW: Int = outWidth
+		val photoH: Int = outHeight
+
+		// Determine how much to scale down the image
+		val scaleFactor: Int = Math.min(photoW / targetW, photoH / targetH)
+
+		// Decode the image file into a Bitmap sized to fill the View
+		inJustDecodeBounds = false
+		inSampleSize = scaleFactor
+		//inPurgeable = true
+	}
+	return BitmapFactory.decodeFile(imagePath, bmOptions)
+}
+
 //endregion
