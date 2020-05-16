@@ -28,8 +28,8 @@ dependencies {
 }
 ```
 
-#How to Ues
-to use as dialog .. you need to provide your layout design.& you should use appAttachment ids for each button.
+# How to Ues
+To use as dialog .. you need to provide your layout design & you should use appAttachment ids for each button.
 ```xml
 <item name="appAttachmentDialogCameraBtn" type="id" />
 <item name="appAttachmentDialogGalleryBtn" type="id" />
@@ -118,10 +118,12 @@ AppAttachmentDialog(R.layout.attachment_type_dialog_layout
           displasyImage(file)
       }
       .prepare {
-          //Optional:you can pass you authority  
+          //Optional:you can pass you custom  authority  
           //this.authority = ""
-          //Optional:you can pass you file
+          //Optional:you can pass your custom file
           //this.cameraPictureFile = File("...")
+          //Note: if your custom file in shared storage.you need to set `requestStorageRunTimePermission` true
+          //this.requestStorageRunTimePermission = true
       }
       .onExplainRequired { permission, reTry ->
           //to show user an explain, then call reTry()
@@ -148,7 +150,19 @@ override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out
 }
 ```
 
+# Notable points
+1- if you have FileProvider in Manifest, yout must use your custom authority or add the fallowning lines in your fileProvider xml resource.
+```xml
+<files-path name="my_images" path="."/>
+<cache-path name="my_cache_images" path="." />
+<external-path name="external" path="." />
+```
+
+2- you can use openCamera,openGallery,openFileManager & getPath apis without `AppAttachmentDialog`.
+
+3- check also compressBitmapFile,scaleDonwImage apis 
+
 # 
-Enjoy using app-attachment library,report any bugs you found, or even drop me an email gg.goo.mobile@gmail.com
+Enjoy using app-attachment library,report any bugs you found, or even drop me an (Arabic/English) email gg.goo.mobile@gmail.com
 
 
