@@ -20,11 +20,11 @@ allprojects {
   }
 }
 ```
-in app level build.gradle
+in app level build.gradle ![Release](https://jitpack.io/v/MohammedSDev/app-attachment.svg)
 ```gradle
 dependencies {
 
-        implementation 'com.github.MohammedSDev:app-attachment:1.0.0'
+        implementation 'com.github.MohammedSDev:app-attachment:1.x.x'
 }
 ```
 
