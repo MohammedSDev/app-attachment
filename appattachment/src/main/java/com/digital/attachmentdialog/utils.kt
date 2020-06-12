@@ -1,8 +1,11 @@
 package com.digital.attachmentdialog
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.annotation.TargetApi
 import android.app.Activity
 import android.content.*
+import android.content.pm.PackageManager
 import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -13,6 +16,10 @@ import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.webkit.MimeTypeMap
 import android.widget.Toast
+import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import java.io.*
@@ -120,6 +127,7 @@ fun openCamera(
  *
  * @param context     the context
  * @param requestCode the request code
+ * @param fragment the host fragment if you call from fragment
  */
 fun openGallery(context: Activity, requestCode: Int, fragment: Fragment? = null) {
 	val intent =
@@ -391,3 +399,149 @@ fun scaleDonwImage(imagePath: String, targetW: Int, targetH: Int): Bitmap? {
 }
 
 //endregion
+
+/**
+ * request open gallery with request required permissions
+ *
+ * @param activity: the host activity context.
+ * @param hostFragment: the host fragment if you call inside fragment.
+ * @param explainRequired: Lamda will be called when runtime permission should show explain
+ * */
+fun openGallery(
+	activity: Activity,
+	hostFragment: Fragment? = null,
+	explainRequired: ((permission: String, reTry: () -> Unit) -> Unit)? = null
+) {
+	if (Build.VERSION.SDK_INT >= 29)
+		openGallery(activity, AppAttachmentDialog.OPEN_GALLARY_REQUEST, hostFragment)
+	else
+		checkPermission(
+			activity,
+			arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+			AppAttachmentDialog.GALLERY_PERMISSION_REQUEST_CODE,
+			explainRequired,
+			hostFragment
+		) {
+			openGallery(activity, AppAttachmentDialog.OPEN_GALLARY_REQUEST, hostFragment)
+		}
+}
+
+
+/**
+ * request open gallery with request required permissions
+ *
+ * @param activity: the host activity context.
+ * @param hostFragment: the host fragment if you call inside fragment.
+ * @param file: custom file to save image (optional)
+ * @param authority: custom authority (optional)
+ * @param requestStorageRunTimePermission set true if you pass file in shared storage area.
+ * @param explainRequired: Lamda will be called when runtime permission should show explain
+ * */
+fun openCamera(
+	activity: Activity,
+	hostFragment: Fragment? = null,
+	file: File? = null,
+	authority: String? = null,
+	requestStorageRunTimePermission: Boolean = false,
+	explainRequired: ((permission: String, reTry: () -> Unit) -> Unit)? = null
+) {
+
+	if (AppAttachmentDialog.cameraPictureFile == null)
+		AppAttachmentDialog.cameraPictureFile = file ?: File(
+			activity.cacheDir,
+			"pic_${System.currentTimeMillis()}.jpg"
+		)
+	if (AppAttachmentDialog.authority.isEmpty())
+		AppAttachmentDialog.authority =
+			authority ?: activity.packageName + ".fileprovider"
+
+	val permissions = if (requestStorageRunTimePermission)
+		arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA)
+	else
+		arrayOf(Manifest.permission.CAMERA)
+	checkPermission(
+		activity,
+		permissions,
+		AppAttachmentDialog.CAMERA_PERMISSION_REQUEST_CODE,
+		explainRequired,
+		hostFragment
+	) {
+
+		openCamera(
+			activity!!,
+			AppAttachmentDialog.OPEN_CAMERA_REQUEST,
+			AppAttachmentDialog.authority,
+			AppAttachmentDialog.cameraPictureFile!!,
+			hostFragment
+		)
+	}
+
+}
+
+//@RequiresApi(Build.VERSION_CODES.M)
+//@TargetApi(Build.VERSION_CODES.M)
+@SuppressLint("NewApi")
+internal fun checkPermission(
+	mContext: Activity,
+	permission: Array<String>,
+	permissionCode: Int,
+	explainRequired: ((permission: String, reTry: () -> Unit) -> Unit)? = null,
+	hostFragment: Fragment? = null,
+	callback: () -> Unit
+) {
+
+//	val explainRequired: ((permission: String, reTry: () -> Unit) -> Unit)? = null
+	var deniedPermission: String = ""
+	permission.forEach {
+		if (ContextCompat.checkSelfPermission(mContext, it)
+			!= PackageManager.PERMISSION_GRANTED
+		) {
+			deniedPermission = it
+			return@forEach
+		}
+	}
+	if (deniedPermission.isNotEmpty()) {
+
+		// Permission is not granted
+		// Should we show an explanation?
+
+		if (ActivityCompat.shouldShowRequestPermissionRationale(mContext, deniedPermission)) {
+			// Show an explanation to the user *asynchronously* -- don't block
+			// this thread waiting for the user's response! After the user
+			// sees the explanation, try again to request the permission.
+
+			explainRequired?.invoke(deniedPermission) {
+				hostFragment?.requestPermissions(
+					permission,
+					permissionCode
+				) ?: mContext.requestPermissions(
+					permission,
+					permissionCode
+				)
+			} ?: hostFragment?.requestPermissions(
+				permission,
+				permissionCode
+			) ?: mContext.requestPermissions(
+				permission,
+				permissionCode
+			)
+
+		} else {
+			// No explanation needed, we can request the permission.
+
+			hostFragment?.requestPermissions(
+				permission,
+				permissionCode
+			) ?: mContext.requestPermissions(
+				permission,
+				permissionCode
+			)
+			// MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+			// app-defined int constant. The callback method gets the
+			// result of the request.
+		}
+	} else {
+		callback()
+	}
+
+}
