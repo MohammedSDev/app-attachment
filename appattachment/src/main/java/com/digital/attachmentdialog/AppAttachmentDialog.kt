@@ -57,7 +57,7 @@ class AppAttachmentDialogConfig {
 	/**
 	 * check & request storage runtime permission.
 	 * note: if you specific custom file path in shared storage. set this to true
-	 * fallowing lines
+	 *
 	 * */
 	var requestStorageRunTimePermission = false
 
@@ -139,16 +139,16 @@ class AppAttachmentDialog() :
 	}
 
 	companion object {
-		private val OPEN_CAMERA_REQUEST = 1010
-		private val OPEN_GALLARY_REQUEST = 2020
+		internal val OPEN_CAMERA_REQUEST = 1010
+		internal val OPEN_GALLARY_REQUEST = 2020
 		private val OPEN_OTHER_REQUEST = 3020
-		private val CAMERA_PERMISSION_REQUEST_CODE = 9901
-		private val GALLERY_PERMISSION_REQUEST_CODE = 9902
+		internal val CAMERA_PERMISSION_REQUEST_CODE = 9901
+		internal val GALLERY_PERMISSION_REQUEST_CODE = 9902
 		private val OTHER_PERMISSION_REQUEST_CODE = 9903
 
 
-		private var cameraPictureFile: File? = null
-		private var authority: String = ""
+		internal var cameraPictureFile: File? = null
+		internal var authority: String = ""
 
 		@SuppressLint("NewApi")
 		fun onActivityResult(
