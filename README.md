@@ -1,6 +1,6 @@
 # app-attachment
 
-![Release](https://jitpack.io/v/MohammedSDev/app-attachment.svg)
+![Release](https://jitpack.io/v/mobile-android-libraries/app-attachment.svg)
 
 
 App-Attachment is an easy,flexible library for you Android attachment feature, you can use it 
@@ -20,7 +20,7 @@ allprojects {
   }
 }
 ```
-in app level build.gradle ![Release](https://jitpack.io/v/MohammedSDev/app-attachment.svg)
+in app level build.gradle ![Release](https://jitpack.io/v/mobile-android-libraries/app-attachment.svg)
 ```gradle
 dependencies {
 
