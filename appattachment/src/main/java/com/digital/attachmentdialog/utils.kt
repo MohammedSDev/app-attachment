@@ -14,6 +14,7 @@ import android.os.Build
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -71,7 +72,29 @@ fun getMimeType(url: String): String? {
  */
 
 fun openFileManager(context: Activity, requestCode: Int, fragment: Fragment? = null) {
+//	openDocumentManager(context, requestCode, fragment)
+//	return
 	val intent = Intent(Intent.ACTION_GET_CONTENT)
+	intent.type = "application/*"
+	intent.addCategory(Intent.CATEGORY_OPENABLE)
+
+	try {
+		if (fragment != null)
+			fragment.startActivityForResult(intent, requestCode)
+		else
+			context.startActivityForResult(intent, requestCode)
+	} catch (ex: Exception) {
+		Toast.makeText(
+			context,
+			"Kindly, install any File Manager application first",
+			Toast.LENGTH_LONG
+		).show()
+	}
+
+}
+
+fun openDocumentManager(context: Activity, requestCode: Int, fragment: Fragment? = null) {
+	val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
 	intent.type = "application/*"
 	intent.addCategory(Intent.CATEGORY_OPENABLE)
 
@@ -144,29 +167,25 @@ fun openGallery(context: Activity, requestCode: Int, fragment: Fragment? = null)
 
 
 //this function check if file is from GoogleDrive.. get its path, otherwise call FileUtils.getPath()/
-fun getDrivePath(context: Context, uri: Uri?, parentFile: File): String? {
+fun getDrivePath(context: Context, uri: Uri?, parentFile: File): AppAttacModel? {
 	val file: File
 	if (uri != null) {
 		//Google apps'Google Drive'
 		if (uri.authority?.startsWith("com.google.android.apps.") == true) {
+			val info = getPathInfo(context, uri)
 			try {
-				val inputStream = context.getContentResolver().openInputStream(uri);
+				val inputStream = context.contentResolver.openInputStream(uri)
 				if (inputStream != null) {
-					val query = context.getContentResolver().query(uri, null, null, null, null);
-					var mimeType: String? = null;
-					if (query != null) {
-						query.moveToFirst();
-						mimeType = query.getString(query.getColumnIndex("mime_type"));
-					}
+
 					file = File(
 						parentFile,
 						"file_" + System.currentTimeMillis() + "." + MimeTypeMap.getSingleton().getExtensionFromMimeType(
-							mimeType
+							info?.mimeType ?: ""
 						)
-					);
-					val outs: OutputStream = FileOutputStream(file);
+					)
+					val outs: OutputStream = FileOutputStream(file)
 					val bytes = ByteArray(1024)
-					var length = -1;
+					var length = -1
 					while (true) {
 						length = inputStream.read(bytes)
 						if (length != -1)
@@ -178,20 +197,20 @@ fun getDrivePath(context: Context, uri: Uri?, parentFile: File): String? {
 					inputStream.close();
 					outs.close();
 //                    println(text = "log_file, getPath: Done Get File From GoogleApp");
-					return file.getPath();
+					return info?.copy(path = file.absolutePath) ?: AppAttacModel(file.absolutePath)
 				} else
-					return null;
+					return info
 			} catch (e: FileNotFoundException) {
-				e.printStackTrace();
-				return null;
+				e.printStackTrace()
+				return null
 			} catch (e: IOException) {
-				e.printStackTrace();
-				return null;
+				e.printStackTrace()
+				return null
 			}
 		} else
-			return getPath(context, uri);
+			return getPath(context, uri)
 	} else
-		return null;
+		return null
 }
 
 
@@ -207,7 +226,7 @@ fun getDrivePath(context: Context, uri: Uri?, parentFile: File): String? {
  */
 
 @SuppressLint("NewApi")
-fun getPath(context: Context, uri: Uri?): String? {
+fun getPathOldVersion(context: Context, uri: Uri?): String? {
 	if (uri == null) return null
 	val isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
 	val isQorHigher = Build.VERSION.SDK_INT >= 29
@@ -293,6 +312,74 @@ fun getPath(context: Context, uri: Uri?): String? {
 	return null
 }
 
+data class AppAttacModel(
+	val path: String? = null,
+	val name: String? = null,
+	val mimeType: String? = null,
+	val size: String? = null
+)
+
+fun getPath(context: Context, uri: Uri?): AppAttacModel? {
+	uri ?: return null
+	val info = getPathInfo(context, uri)
+
+	val data = getDataColumn(context, uri, null, null)
+	val data1 by lazy { runCatching { getPathOldVersion(context, uri) }.getOrNull() }
+	val data2 by lazy { runCatching { getInputStreamCopyFilePath(context, uri) }.getOrNull() }
+	return if (data?.isNotEmpty() == true)
+		info?.copy(path = data) ?: AppAttacModel(data)
+	else if (data1?.isNotEmpty() == true)
+		info?.copy(path = data1) ?: AppAttacModel(data1)
+	else {
+		info?.copy(path = data2) ?: AppAttacModel(data2)
+	}
+
+}
+
+private fun getPathInfo(context: Context, uri: Uri): AppAttacModel? {
+
+	return runCatching {
+		val name: String?
+		val size: String?
+		val mimeType: String?
+//get file path of open document (pdf):
+		val c = context.contentResolver.query(uri, null, null, null, null)
+		return if (c?.moveToFirst() == true) {
+			name = c.getString(c.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+			val sizei = c.getColumnIndex(OpenableColumns.SIZE)
+			val mimei = c.getColumnIndex("mime_type")
+			size = if (c.isNull(sizei)) null else c.getString(sizei)
+			mimeType = if (c.isNull(mimei)) null else c.getString(mimei)
+			c.close()
+			AppAttacModel(null, name, mimeType, size)
+		} else {
+			c?.close()
+			null
+		}
+	}.getOrNull()
+}
+
+private fun getInputStreamCopyFilePath(context: Context, uri: Uri): String? {
+
+	val str = context.contentResolver.openInputStream(uri) ?: return null
+
+	val outFile = File.createTempFile("pre_", "t_fi", context.cacheDir)
+	val fStream = FileOutputStream(outFile)
+	val buffer = ByteArray(1024)
+	var result = 0
+	while (true) {
+		result = str.read(buffer)
+		if (result != -1) {
+			fStream.write(buffer, 0, result)
+		} else
+			break
+	}
+
+	return if (outFile.length() <= 0)
+		null
+	else outFile.absolutePath
+}
+
 
 /**
  * Get the value of the data column for this Uri. This is useful for
@@ -311,14 +398,20 @@ private fun getDataColumn(
 
 	var cursor: Cursor? = null
 	val column = "_data"
-	val projection = arrayOf(column)
+	val column2 = "path"
+	val projection = arrayOf(column, column2)
 
 	try {
 		cursor = context.contentResolver.query(uri!!, projection, selection, selectionArgs, null)
 		if (cursor != null && cursor.moveToFirst()) {
-			val column_index = cursor.getColumnIndexOrThrow(column)
-			return cursor.getString(column_index)
+			var columnIndex = cursor.getColumnIndex(column)
+			if (columnIndex == -1) {
+				columnIndex = cursor.getColumnIndex(column2)
+			}
+			return cursor.getString(columnIndex)
 		}
+	} catch (e: Exception) {
+		return null
 	} finally {
 		cursor?.close()
 	}

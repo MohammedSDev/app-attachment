@@ -120,7 +120,7 @@ class AppAttachmentDialog() :
 //    var dismissAfterClick = true
 
 	private val config = AppAttachmentDialogConfig()
-	private var onResultCB: ((code: Int, file: File?) -> Unit)? = null
+	private var onResultCB: ((code: Int, file: File?,info:AppAttacModel?) -> Unit)? = null
 	private var explainRequired: ((permission: String, reTry: () -> Unit) -> Unit)? = null
 
 	fun prepare(block: AppAttachmentDialogConfig.() -> Unit): AppAttachmentDialog {
@@ -128,7 +128,7 @@ class AppAttachmentDialog() :
 		return this
 	}
 
-	fun onResult(onResult: (code: Int, file: File?) -> Unit): AppAttachmentDialog {
+	fun onResult(onResult: (code: Int, file: File?,info:AppAttacModel?) -> Unit): AppAttachmentDialog {
 		onResultCB = onResult
 		return this
 	}
@@ -156,7 +156,7 @@ class AppAttachmentDialog() :
 			resultCode: Int,
 			data: Intent?,
 			context: Context?,
-			onResult: (code: Int, file: File?) -> Unit
+			onResult: (code: Int, file: File?, info: AppAttacModel?) -> Unit
 		) {
 			val activityReqCodeMask = 0x0000ffff
 			if (resultCode == AppCompatActivity.RESULT_OK) {
@@ -164,33 +164,33 @@ class AppAttachmentDialog() :
 
 					requestCode == OPEN_CAMERA_REQUEST ||
 						requestCode and activityReqCodeMask == OPEN_CAMERA_REQUEST ->
-						onResult.invoke(requestCode, cameraPictureFile)
+						onResult.invoke(requestCode, cameraPictureFile,null)
 					requestCode == OPEN_GALLARY_REQUEST ||
 						requestCode and activityReqCodeMask == OPEN_GALLARY_REQUEST -> {
 						if (data == null) {
-							onResult.invoke(requestCode, null)
+							onResult.invoke(requestCode, null,null)
 							return
 						}
 						Thread {
-							val path = getPath(context!!, data.data)
-							val fileAvatar = if (path.isNullOrEmpty()) null else File(path)
+							val model = getPath(context!!, data.data)
+							val fileAvatar = if (model?.path.isNullOrEmpty()) null else File(model?.path!!)
 							Handler(Looper.getMainLooper()).post {
-								onResult.invoke(requestCode, fileAvatar)
+								onResult.invoke(requestCode, fileAvatar,model)
 							}
 						}.start()
 					}
 					requestCode == OPEN_OTHER_REQUEST ||
 						requestCode and activityReqCodeMask == OPEN_OTHER_REQUEST -> {
 						if (data == null) {
-							onResult.invoke(requestCode, null)
+							onResult.invoke(requestCode, null,null)
 							return
 						}
 
 						Thread {
-							val path = getDrivePath(context!!, data.data, context!!.cacheDir)
-							val fileAvatar = if (path.isNullOrEmpty()) null else File(path)
+							val model = getDrivePath(context!!, data.data, context!!.cacheDir)
+							val fileAvatar = if (model?.path.isNullOrEmpty()) null else File(model?.path!!)
 							Handler(Looper.getMainLooper()).post {
-								onResult.invoke(requestCode, fileAvatar)
+								onResult.invoke(requestCode, fileAvatar,model)
 							}
 						}.start()
 					}
@@ -455,7 +455,7 @@ class AppAttachmentDialog() :
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 		if (activity?.isFinishing != false) return
 		super.onActivityResult(requestCode, resultCode, data)
-		onActivityResult(requestCode, resultCode, data, context, onResultCB ?: { code, file -> })
+		onActivityResult(requestCode, resultCode, data, context, onResultCB ?: { code, file,model -> })
 
 
 	}
