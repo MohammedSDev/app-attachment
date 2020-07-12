@@ -2,7 +2,6 @@ package com.digital.attachmentdialog
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.annotation.TargetApi
 import android.app.Activity
 import android.content.*
 import android.content.pm.PackageManager
@@ -17,8 +16,6 @@ import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
 import android.widget.Toast
-import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -26,6 +23,7 @@ import androidx.fragment.app.Fragment
 import java.io.*
 import java.lang.Exception
 import java.net.URLConnection
+import java.util.*
 
 
 //region Gallery,Camera & files
@@ -34,23 +32,26 @@ import java.net.URLConnection
  * try get file mime type
  * */
 fun getMimeType(url: String): String? {
-	if (url.isEmpty()) return null
-	val file = File(url)
-	val ins = BufferedInputStream(FileInputStream(file))
-	val mimeType = URLConnection.guessContentTypeFromStream(ins)
+	return runCatching {
+		if (url.isEmpty()) return null
+		val file = File(url)
+		val ins = BufferedInputStream(FileInputStream(file))
+		val mimeType: String? = URLConnection.guessContentTypeFromStream(ins)
 
-	if (mimeType.isNotEmpty())
-		return mimeType
+		if (!mimeType.isNullOrEmpty())
+			return mimeType
 
-	var type: String? = null
+		var type: String? = null
 
-	val extension = MimeTypeMap.getFileExtensionFromUrl(url)
-	if (extension != null) {
-		type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase())
-	} else {
-		type = "*/*"
-	}
-	return type
+		val extension: String? = MimeTypeMap.getFileExtensionFromUrl(url)
+		if (extension != null) {
+			type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase())
+		} else {
+//		type = "*/*"
+			type = null
+		}
+		return type
+	}.getOrNull()
 
 	//val uri = Uri.parse(url)
 	/*if (context != null
@@ -60,6 +61,32 @@ fun getMimeType(url: String): String? {
 			type = cr.getType(uri)
 	}
 	else*/
+}
+
+fun getMimeType(context: Context?, uri: Uri?): String? {
+	context ?: return null
+	uri ?: return null
+	return runCatching {
+		val fileDes = context.contentResolver.openFileDescriptor(uri, "r")?.fileDescriptor
+		if (fileDes != null) {
+			val ins = BufferedInputStream(FileInputStream(fileDes))
+			val mimeType: String? = URLConnection.guessContentTypeFromStream(ins)
+
+			if (!mimeType.isNullOrEmpty())
+				return mimeType
+
+		}
+		var type: String? = null
+
+		val extension: String? = MimeTypeMap.getFileExtensionFromUrl(uri.toString())
+		if (extension != null) {
+			type =
+				MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase(Locale.ENGLISH))
+		} else {
+			type = null
+		}
+		return type
+	}.getOrNull()
 }
 
 
@@ -167,7 +194,7 @@ fun openGallery(context: Activity, requestCode: Int, fragment: Fragment? = null)
 
 
 //this function check if file is from GoogleDrive.. get its path, otherwise call FileUtils.getPath()/
-fun getDrivePath(context: Context, uri: Uri?, parentFile: File): AppAttacModel? {
+fun getDrivePath(context: Context, uri: Uri?, parentFile: File): AppAttachModel? {
 	val file: File
 	if (uri != null) {
 		//Google apps'Google Drive'
@@ -179,9 +206,10 @@ fun getDrivePath(context: Context, uri: Uri?, parentFile: File): AppAttacModel? 
 
 					file = File(
 						parentFile,
-						"file_" + System.currentTimeMillis() + "." + MimeTypeMap.getSingleton().getExtensionFromMimeType(
-							info?.mimeType ?: ""
-						)
+						"file_" + System.currentTimeMillis() + "." + MimeTypeMap.getSingleton()
+							.getExtensionFromMimeType(
+								info?.mimeType ?: ""
+							)
 					)
 					val outs: OutputStream = FileOutputStream(file)
 					val bytes = ByteArray(1024)
@@ -197,7 +225,7 @@ fun getDrivePath(context: Context, uri: Uri?, parentFile: File): AppAttacModel? 
 					inputStream.close();
 					outs.close();
 //                    println(text = "log_file, getPath: Done Get File From GoogleApp");
-					return info?.copy(path = file.absolutePath) ?: AppAttacModel(file.absolutePath)
+					return info?.copy(path = file.absolutePath) ?: AppAttachModel(file.absolutePath)
 				} else
 					return info
 			} catch (e: FileNotFoundException) {
@@ -312,36 +340,38 @@ fun getPathOldVersion(context: Context, uri: Uri?): String? {
 	return null
 }
 
-data class AppAttacModel(
+data class AppAttachModel(
 	val path: String? = null,
 	val name: String? = null,
 	val mimeType: String? = null,
+	val extension: String? = null,
 	val size: String? = null
 )
 
-fun getPath(context: Context, uri: Uri?): AppAttacModel? {
+fun getPath(context: Context, uri: Uri?): AppAttachModel? {
 	uri ?: return null
 	val info = getPathInfo(context, uri)
 
 	val data = getDataColumn(context, uri, null, null)
 	val data1 by lazy { runCatching { getPathOldVersion(context, uri) }.getOrNull() }
-	val data2 by lazy { runCatching { getInputStreamCopyFilePath(context, uri) }.getOrNull() }
+	val data2 by lazy { runCatching { getInputStreamCopyFilePath(context, uri, info) }.getOrNull() }
 	return if (data?.isNotEmpty() == true)
-		info?.copy(path = data) ?: AppAttacModel(data)
+		info?.copy(path = data) ?: AppAttachModel(data)
 	else if (data1?.isNotEmpty() == true)
-		info?.copy(path = data1) ?: AppAttacModel(data1)
+		info?.copy(path = data1) ?: AppAttachModel(data1)
 	else {
-		info?.copy(path = data2) ?: AppAttacModel(data2)
+		info?.copy(path = data2) ?: AppAttachModel(data2)
 	}
 
 }
 
-private fun getPathInfo(context: Context, uri: Uri): AppAttacModel? {
+private fun getPathInfo(context: Context, uri: Uri): AppAttachModel? {
 
 	return runCatching {
 		val name: String?
 		val size: String?
 		val mimeType: String?
+		val extension: String?
 //get file path of open document (pdf):
 		val c = context.contentResolver.query(uri, null, null, null, null)
 		return if (c?.moveToFirst() == true) {
@@ -349,9 +379,14 @@ private fun getPathInfo(context: Context, uri: Uri): AppAttacModel? {
 			val sizei = c.getColumnIndex(OpenableColumns.SIZE)
 			val mimei = c.getColumnIndex("mime_type")
 			size = if (c.isNull(sizei)) null else c.getString(sizei)
-			mimeType = if (c.isNull(mimei)) null else c.getString(mimei)
+			mimeType = if (!c.isNull(mimei)) c.getString(mimei) else getMimeType(context, uri)
+				?: getMimeType(uri.toString())
 			c.close()
-			AppAttacModel(null, name, mimeType, size)
+			extension = if (!mimeType.isNullOrEmpty())
+				MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType)
+			else
+				null
+			AppAttachModel(null, name, mimeType, extension, size)
 		} else {
 			c?.close()
 			null
@@ -359,11 +394,18 @@ private fun getPathInfo(context: Context, uri: Uri): AppAttacModel? {
 	}.getOrNull()
 }
 
-private fun getInputStreamCopyFilePath(context: Context, uri: Uri): String? {
+private fun getInputStreamCopyFilePath(
+	context: Context,
+	uri: Uri,
+	info: AppAttachModel?
+): String? {
 
 	val str = context.contentResolver.openInputStream(uri) ?: return null
-
-	val outFile = File.createTempFile("pre_", "t_fi", context.cacheDir)
+	val suffix = if (info?.extension.isNullOrEmpty() || info?.extension?.startsWith(".") == true)
+		"t_fi" + info?.extension
+	else
+		"t_fi." + info?.extension
+	val outFile = File.createTempFile("pre_", suffix, context.cacheDir)
 	val fStream = FileOutputStream(outFile)
 	val buffer = ByteArray(1024)
 	var result = 0
