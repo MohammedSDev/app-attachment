@@ -6,8 +6,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.os.*
 import android.view.*
 import androidx.annotation.LayoutRes
@@ -18,10 +16,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import java.io.File
 import com.digital.attachmentdialog.AppAttachmentType.*
-import java.io.ByteArrayOutputStream
-import java.io.FileOutputStream
 import java.io.Serializable
-import java.util.*
 
 sealed class AppAttachmentType(val value: Int) : Serializable {
 	object CAMERA : AppAttachmentType(1)
@@ -120,7 +115,7 @@ class AppAttachmentDialog() :
 //    var dismissAfterClick = true
 
 	private val config = AppAttachmentDialogConfig()
-	private var onResultCB: ((code: Int, file: File?,info:AppAttacModel?) -> Unit)? = null
+	private var onResultCB: ((code: Int, file: File?,info:AppAttachModel?) -> Unit)? = null
 	private var explainRequired: ((permission: String, reTry: () -> Unit) -> Unit)? = null
 
 	fun prepare(block: AppAttachmentDialogConfig.() -> Unit): AppAttachmentDialog {
@@ -128,7 +123,7 @@ class AppAttachmentDialog() :
 		return this
 	}
 
-	fun onResult(onResult: (code: Int, file: File?,info:AppAttacModel?) -> Unit): AppAttachmentDialog {
+	fun onResult(onResult: (code: Int, file: File?,info:AppAttachModel?) -> Unit): AppAttachmentDialog {
 		onResultCB = onResult
 		return this
 	}
@@ -156,7 +151,7 @@ class AppAttachmentDialog() :
 			resultCode: Int,
 			data: Intent?,
 			context: Context?,
-			onResult: (code: Int, file: File?, info: AppAttacModel?) -> Unit
+			onResult: (code: Int, file: File?, info: AppAttachModel?) -> Unit
 		) {
 			val activityReqCodeMask = 0x0000ffff
 			if (resultCode == AppCompatActivity.RESULT_OK) {
