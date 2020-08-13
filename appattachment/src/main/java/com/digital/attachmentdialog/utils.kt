@@ -563,7 +563,7 @@ fun openGallery(
 
 
 /**
- * request open gallery with request required permissions
+ * request open camera with request required permissions
  *
  * @param activity: the host activity context.
  * @param hostFragment: the host fragment if you call inside fragment.
@@ -611,6 +611,29 @@ fun openCamera(
 		)
 	}
 
+}
+
+
+/**
+ * request open File with request required permissions
+ *
+ * @param activity: the host activity context.
+ * @param hostFragment: the host fragment if you call inside fragment.
+ * @param explainRequired: Lamda will be called when runtime permission should show explain
+ * */
+fun openFileManager(
+	activity: Activity,
+	hostFragment: Fragment? = null,
+	explainRequired: ((permission: String, reTry: () -> Unit) -> Unit)? = null
+) {
+
+	checkPermission(activity,
+		arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+		AppAttachmentDialog.OTHER_PERMISSION_REQUEST_CODE,explainRequired,hostFragment
+	) {
+
+		openFileManager(activity, AppAttachmentDialog.OPEN_OTHER_REQUEST, hostFragment)
+	}
 }
 
 //@RequiresApi(Build.VERSION_CODES.M)

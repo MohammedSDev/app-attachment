@@ -136,10 +136,10 @@ class AppAttachmentDialog() :
 	companion object {
 		internal val OPEN_CAMERA_REQUEST = 1010
 		internal val OPEN_GALLARY_REQUEST = 2020
-		private val OPEN_OTHER_REQUEST = 3020
+		internal val OPEN_OTHER_REQUEST = 3020
 		internal val CAMERA_PERMISSION_REQUEST_CODE = 9901
 		internal val GALLERY_PERMISSION_REQUEST_CODE = 9902
-		private val OTHER_PERMISSION_REQUEST_CODE = 9903
+		internal val OTHER_PERMISSION_REQUEST_CODE = 9903
 
 
 		internal var cameraPictureFile: File? = null
