@@ -568,6 +568,7 @@ fun openGallery(
  * @param activity: the host activity context.
  * @param hostFragment: the host fragment if you call inside fragment.
  * @param file: custom file to save image (optional)
+ * @param overwrite: false to use newPath every time. if @param file not null..this param has no effect.
  * @param authority: custom authority (optional)
  * @param requestStorageRunTimePermission set true if you pass file in shared storage area.
  * @param explainRequired: Lamda will be called when runtime permission should show explain
@@ -576,19 +577,24 @@ fun openCamera(
 	activity: Activity,
 	hostFragment: Fragment? = null,
 	file: File? = null,
+	overwrite: Boolean = false,
 	authority: String? = null,
 	requestStorageRunTimePermission: Boolean = false,
 	explainRequired: ((permission: String, reTry: () -> Unit) -> Unit)? = null
 ) {
 
-	if (AppAttachmentDialog.cameraPictureFile == null)
-		AppAttachmentDialog.cameraPictureFile = file ?: File(
+	if(file != null)
+		AppAttachmentDialog.cameraPictureFile = file
+	else if (AppAttachmentDialog.cameraPictureFile == null || !overwrite)
+		AppAttachmentDialog.cameraPictureFile = File(
 			activity.cacheDir,
 			"pic_${System.currentTimeMillis()}.jpg"
 		)
-	if (AppAttachmentDialog.authority.isEmpty())
-		AppAttachmentDialog.authority =
-			authority ?: activity.packageName + ".fileprovider"
+
+	if(!authority.isNullOrEmpty())
+		AppAttachmentDialog.authority = authority
+	else if (AppAttachmentDialog.authority.isEmpty())
+		AppAttachmentDialog.authority = activity.packageName + ".fileprovider"
 
 	val permissions = if (requestStorageRunTimePermission)
 		arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA)

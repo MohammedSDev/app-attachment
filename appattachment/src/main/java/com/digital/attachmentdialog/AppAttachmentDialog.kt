@@ -235,7 +235,7 @@ class AppAttachmentDialog() :
 						// permission was granted, yay! Do the
 						// contacts-related task you need to do.
 						if (activity == null) return
-						openGallery(activity, OPEN_GALLARY_REQUEST)
+						openGallery(activity, OPEN_GALLARY_REQUEST,fragment)
 					} else {
 						// permission denied, boo! Disable the
 						// functionality that depends on this permission.
