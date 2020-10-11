@@ -45,10 +45,12 @@ class AppAttachmentDialogConfig {
 	 * dismiss dialog after user choose.
 	 * */
 	var dismissAfterClick = true
+
 	/**
 	 * make dialog with 0.91% of screen.
 	 * */
 	var requestWithAtMost = true
+
 	/**
 	 * check & request storage runtime permission.
 	 * note: if you specific custom file path in shared storage. set this to true
@@ -115,7 +117,7 @@ class AppAttachmentDialog() :
 //    var dismissAfterClick = true
 
 	private val config = AppAttachmentDialogConfig()
-	private var onResultCB: ((code: Int, file: File?,info:AppAttachModel?) -> Unit)? = null
+	private var onResultCB: ((code: Int, file: File?, info: AppAttachModel?) -> Unit)? = null
 	private var explainRequired: ((permission: String, reTry: () -> Unit) -> Unit)? = null
 
 	fun prepare(block: AppAttachmentDialogConfig.() -> Unit): AppAttachmentDialog {
@@ -123,7 +125,7 @@ class AppAttachmentDialog() :
 		return this
 	}
 
-	fun onResult(onResult: (code: Int, file: File?,info:AppAttachModel?) -> Unit): AppAttachmentDialog {
+	fun onResult(onResult: (code: Int, file: File?, info: AppAttachModel?) -> Unit): AppAttachmentDialog {
 		onResultCB = onResult
 		return this
 	}
@@ -159,25 +161,25 @@ class AppAttachmentDialog() :
 
 					requestCode == OPEN_CAMERA_REQUEST ||
 						requestCode and activityReqCodeMask == OPEN_CAMERA_REQUEST ->
-						onResult.invoke(requestCode, cameraPictureFile,null)
+						onResult.invoke(requestCode, cameraPictureFile, null)
 					requestCode == OPEN_GALLARY_REQUEST ||
 						requestCode and activityReqCodeMask == OPEN_GALLARY_REQUEST -> {
 						if (data == null) {
-							onResult.invoke(requestCode, null,null)
+							onResult.invoke(requestCode, null, null)
 							return
 						}
 						Thread {
 							val model = getPath(context!!, data.data)
 							val fileAvatar = if (model?.path.isNullOrEmpty()) null else File(model?.path!!)
 							Handler(Looper.getMainLooper()).post {
-								onResult.invoke(requestCode, fileAvatar,model)
+								onResult.invoke(requestCode, fileAvatar, model)
 							}
 						}.start()
 					}
 					requestCode == OPEN_OTHER_REQUEST ||
 						requestCode and activityReqCodeMask == OPEN_OTHER_REQUEST -> {
 						if (data == null) {
-							onResult.invoke(requestCode, null,null)
+							onResult.invoke(requestCode, null, null)
 							return
 						}
 
@@ -185,7 +187,7 @@ class AppAttachmentDialog() :
 							val model = getDrivePath(context!!, data.data, context!!.cacheDir)
 							val fileAvatar = if (model?.path.isNullOrEmpty()) null else File(model?.path!!)
 							Handler(Looper.getMainLooper()).post {
-								onResult.invoke(requestCode, fileAvatar,model)
+								onResult.invoke(requestCode, fileAvatar, model)
 							}
 						}.start()
 					}
@@ -216,6 +218,11 @@ class AppAttachmentDialog() :
 						// permission was granted, yay! Do the
 						// contacts-related task you need to do.
 						if (activity == null) return
+						if (cameraPictureFile == null || cameraPictureFile?.exists() == true)
+							AppAttachmentDialog.cameraPictureFile = File(
+								activity?.cacheDir,
+								"pic_${System.currentTimeMillis()}.jpg"
+							)
 						openCamera(
 							activity,
 							OPEN_CAMERA_REQUEST,
@@ -235,7 +242,7 @@ class AppAttachmentDialog() :
 						// permission was granted, yay! Do the
 						// contacts-related task you need to do.
 						if (activity == null) return
-						openGallery(activity, OPEN_GALLARY_REQUEST,fragment)
+						openGallery(activity, OPEN_GALLARY_REQUEST, fragment)
 					} else {
 						// permission denied, boo! Disable the
 						// functionality that depends on this permission.
@@ -258,7 +265,7 @@ class AppAttachmentDialog() :
 			}
 		}
 
-		}
+	}
 
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -327,7 +334,10 @@ class AppAttachmentDialog() :
 				permissions,
 				CAMERA_PERMISSION_REQUEST_CODE
 			) {
-
+				AppAttachmentDialog.cameraPictureFile = config.cameraPictureFile ?: File(
+					activity?.cacheDir,
+					"pic_${System.currentTimeMillis()}.jpg"
+				)
 				openCamera(
 					activity!!,
 					OPEN_CAMERA_REQUEST,
@@ -450,7 +460,7 @@ class AppAttachmentDialog() :
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 		if (activity?.isFinishing != false) return
 		super.onActivityResult(requestCode, resultCode, data)
-		onActivityResult(requestCode, resultCode, data, context, onResultCB ?: { code, file,model -> })
+		onActivityResult(requestCode, resultCode, data, context, onResultCB ?: { code, file, model -> })
 
 
 	}
