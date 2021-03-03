@@ -39,7 +39,7 @@ sealed class AppAttachmentType(val value: Int) : Serializable {
 class AppAttachmentDialogConfig {
 	var cameraPictureFile: File? = null
 	var authority: String? = null
-//    var requestCode: Int = -1
+    var requestCode: Int? = null
 //    internal set
 	/**
 	 * dismiss dialog after user choose.
@@ -147,23 +147,41 @@ class AppAttachmentDialog() :
 		internal var cameraPictureFile: File? = null
 		internal var authority: String = ""
 
+		fun onActivityResult(
+			requestCode: Int,
+			resultCode: Int,
+			data: Intent?,
+			context: Context?,
+			onResult: (code: Int, file: File?, info: AppAttachModel?)  -> Unit
+		) {
+			onActivityResult(
+				requestCode,
+				resultCode,
+				data,
+				context,
+				null,
+				onResult
+			)
+		}
+
 		@SuppressLint("NewApi")
 		fun onActivityResult(
 			requestCode: Int,
 			resultCode: Int,
 			data: Intent?,
 			context: Context?,
+			config: AppAttachmentDialogConfig? = null,
 			onResult: (code: Int, file: File?, info: AppAttachModel?) -> Unit
 		) {
 			val activityReqCodeMask = 0x0000ffff
 			if (resultCode == AppCompatActivity.RESULT_OK) {
 				when {
 
-					requestCode == OPEN_CAMERA_REQUEST ||
-						requestCode and activityReqCodeMask == OPEN_CAMERA_REQUEST ->
+					requestCode == config?.requestCode ?: OPEN_CAMERA_REQUEST ||
+						requestCode and activityReqCodeMask == config?.requestCode ?: OPEN_CAMERA_REQUEST ->
 						onResult.invoke(requestCode, cameraPictureFile, null)
-					requestCode == OPEN_GALLARY_REQUEST ||
-						requestCode and activityReqCodeMask == OPEN_GALLARY_REQUEST -> {
+					requestCode ==config?.requestCode ?:  OPEN_GALLARY_REQUEST ||
+						requestCode and activityReqCodeMask == config?.requestCode ?: OPEN_GALLARY_REQUEST -> {
 						if (data == null) {
 							onResult.invoke(requestCode, null, null)
 							return
@@ -176,8 +194,8 @@ class AppAttachmentDialog() :
 							}
 						}.start()
 					}
-					requestCode == OPEN_OTHER_REQUEST ||
-						requestCode and activityReqCodeMask == OPEN_OTHER_REQUEST -> {
+					requestCode == config?.requestCode ?: OPEN_OTHER_REQUEST ||
+						requestCode and activityReqCodeMask ==config?.requestCode ?:  OPEN_OTHER_REQUEST -> {
 						if (data == null) {
 							onResult.invoke(requestCode, null, null)
 							return
@@ -199,11 +217,30 @@ class AppAttachmentDialog() :
 
 		}
 
+
 		fun onRequestPermissionsResult(
 			requestCode: Int,
 			permissions: Array<out String>,
 			grantResults: IntArray,
 			activity: Activity?,
+			fragment: Fragment? = null
+		) {
+			onRequestPermissionsResult(
+				requestCode,
+				permissions,
+				grantResults,
+				activity,
+				null,
+				fragment
+			)
+		}
+
+		fun onRequestPermissionsResult(
+			requestCode: Int,
+			permissions: Array<out String>,
+			grantResults: IntArray,
+			activity: Activity?,
+			config: AppAttachmentDialogConfig? = null,
 			fragment: Fragment? = null
 		) {
 			//mask: 0xffff
@@ -225,7 +262,7 @@ class AppAttachmentDialog() :
 							)
 						openCamera(
 							activity,
-							OPEN_CAMERA_REQUEST,
+							config?.requestCode ?: OPEN_CAMERA_REQUEST,
 							authority,
 							cameraPictureFile!!,
 							fragment
@@ -242,7 +279,7 @@ class AppAttachmentDialog() :
 						// permission was granted, yay! Do the
 						// contacts-related task you need to do.
 						if (activity == null) return
-						openGallery(activity, OPEN_GALLARY_REQUEST, fragment)
+						openGallery(activity, config?.requestCode ?: OPEN_GALLARY_REQUEST, fragment)
 					} else {
 						// permission denied, boo! Disable the
 						// functionality that depends on this permission.
@@ -255,7 +292,7 @@ class AppAttachmentDialog() :
 						// permission was granted, yay! Do the
 						// contacts-related task you need to do.
 						if (activity == null) return
-						openFileManager(activity, OPEN_OTHER_REQUEST, fragment)
+						openFileManager(activity, config?.requestCode ?: OPEN_OTHER_REQUEST, fragment)
 					} else {
 						// permission denied, boo! Disable the
 						// functionality that depends on this permission.
@@ -314,13 +351,13 @@ class AppAttachmentDialog() :
 		val otherBtn = view.findViewById<View?>(R.id.appAttachmentDialogOtherBtn)
 		galleryBtn?.setOnClickListener {
 			if (Build.VERSION.SDK_INT >= 29)
-				openGallery(activity!!, OPEN_GALLARY_REQUEST, hostFragment ?: this)
+				openGallery(activity!!,config?.requestCode ?:  OPEN_GALLARY_REQUEST, hostFragment ?: this)
 			else
 				checkPermission(
 					arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
 					GALLERY_PERMISSION_REQUEST_CODE
 				) {
-					openGallery(activity!!, OPEN_GALLARY_REQUEST, hostFragment ?: this)
+					openGallery(activity!!,config?.requestCode ?:  OPEN_GALLARY_REQUEST, hostFragment ?: this)
 				}
 			if (config.dismissAfterClick) dismiss()
 		}
@@ -340,7 +377,7 @@ class AppAttachmentDialog() :
 				)
 				openCamera(
 					activity!!,
-					OPEN_CAMERA_REQUEST,
+					config?.requestCode ?: OPEN_CAMERA_REQUEST,
 					authority,
 					cameraPictureFile!!,
 					hostFragment ?: this
@@ -355,7 +392,7 @@ class AppAttachmentDialog() :
 				OTHER_PERMISSION_REQUEST_CODE
 			) {
 
-				openFileManager(activity!!, OPEN_OTHER_REQUEST, hostFragment ?: this)
+				openFileManager(activity!!, config?.requestCode ?: OPEN_OTHER_REQUEST, hostFragment ?: this)
 			}
 			if (config.dismissAfterClick) dismiss()
 		}
@@ -460,7 +497,7 @@ class AppAttachmentDialog() :
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 		if (activity?.isFinishing != false) return
 		super.onActivityResult(requestCode, resultCode, data)
-		onActivityResult(requestCode, resultCode, data, context, onResultCB ?: { code, file, model -> })
+		onActivityResult(requestCode, resultCode, data, context,config, onResultCB ?: { code, file, model -> })
 
 
 	}
