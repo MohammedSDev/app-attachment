@@ -189,7 +189,7 @@ class AppAttachmentDialog() :
             Thread {
               if (data.clipData != null) {
                 val models = mutableListOf<AppAttachModel?>()
-                for (i in 0..data.clipData!!.itemCount) {
+                for (i in 0 until data.clipData!!.itemCount) {
                   val model = getPath(context!!, data.clipData?.getItemAt(i)?.uri)
                   models.add(model)
                 }
