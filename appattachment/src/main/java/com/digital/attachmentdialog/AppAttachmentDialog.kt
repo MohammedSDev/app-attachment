@@ -58,6 +58,7 @@ class AppAttachmentDialogConfig {
    *
    * */
   var requestStorageRunTimePermission = false
+  var requestStorageRunTimePermissionForGallery = true
 
 }
 
@@ -372,7 +373,7 @@ class AppAttachmentDialog() :
     val galleryBtn = view.findViewById<View?>(R.id.appAttachmentDialogGalleryBtn)
     val otherBtn = view.findViewById<View?>(R.id.appAttachmentDialogOtherBtn)
     galleryBtn?.setOnClickListener {
-      if (Build.VERSION.SDK_INT >= 29 && !config.requestStorageRunTimePermission)
+      if (Build.VERSION.SDK_INT >= 29 && !config.requestStorageRunTimePermissionForGallery)
         openGallery(
           activity!!,
           config?.requestCode ?: OPEN_GALLARY_REQUEST,
