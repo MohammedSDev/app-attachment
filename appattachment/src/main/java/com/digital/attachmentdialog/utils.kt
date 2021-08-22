@@ -261,7 +261,7 @@ fun getDrivePath(context: Context, uri: Uri?, parentFile: File): AppAttachModel?
  */
 
 @SuppressLint("NewApi")
-fun getPathOldVersion(context: Context, uri: Uri?): String? {
+internal fun getPathOldVersion(context: Context, uri: Uri?): String? {
   if (uri == null) return null
   val isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
   val isQorHigher = Build.VERSION.SDK_INT >= 29
@@ -275,7 +275,7 @@ fun getPathOldVersion(context: Context, uri: Uri?): String? {
     //convert bitmap to file
     val outputStream = ByteArrayOutputStream()
     val temporaryFile =
-      File.createTempFile(System.currentTimeMillis().toString(), "image")
+      File.createTempFile(System.currentTimeMillis().toString(), ".png")
     bitmap.compress(Bitmap.CompressFormat.PNG, 0, outputStream)
     FileOutputStream(temporaryFile).run {
       write(outputStream.toByteArray())
@@ -361,7 +361,7 @@ fun getPath(context: Context, uri: Uri?): AppAttachModel? {
   uri ?: return null
   val info = getPathInfo(context, uri)
 
-  val data = getDataColumn(context, uri, null, null)
+  val data = ""// getDataColumn(context, uri, null, null)
   val data1 by lazy { runCatching { getPathOldVersion(context, uri) }.getOrNull() }
   val data2 by lazy { runCatching { getInputStreamCopyFilePath(context, uri, info) }.getOrNull() }
   return if (data?.isNotEmpty() == true)

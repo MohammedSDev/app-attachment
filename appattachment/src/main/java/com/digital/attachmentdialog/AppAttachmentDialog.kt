@@ -194,8 +194,12 @@ class AppAttachmentDialog() :
                   val model = getPath(context!!, data.clipData?.getItemAt(i)?.uri)
                   models.add(model)
                 }
+                val isMulti = models.size > 1
+                val file = if(isMulti) null else runCatching { File(models.firstOrNull()?.path) }.getOrNull()
+                val model = if(isMulti) AppAttachModel(null,null,null,null,null,isMulti,models.filterNotNull())
+                else runCatching { models.firstOrNull() }.getOrNull()
                 Handler(Looper.getMainLooper()).post {
-                  onResult.invoke(requestCode, null, AppAttachModel(null,null,null,null,null,true,models.filterNotNull()))
+                  onResult.invoke(requestCode, file, model)
                 }
               } else {
                 val model = getPath(context!!, data.data)
