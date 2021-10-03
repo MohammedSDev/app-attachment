@@ -185,14 +185,12 @@ fun openGallery(
   fragment: Fragment? = null,
   isMultiSelection: Boolean = false
 ) {
-  val intent =
-//        Intent()
-    Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+  val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+//  val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+//  intent.addCategory(Intent.CATEGORY_OPENABLE)
+  intent.type = "image/*"
   if (isMultiSelection)
     intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-  //startActivityForResult(intentGallery, 1);
-  intent.type = "image/*"
-//    intent.action = Intent.ACTION_GET_CONTENT
   if (fragment != null)
     fragment.startActivityForResult(intent, requestCode)
   else
@@ -264,10 +262,14 @@ fun getDrivePath(context: Context, uri: Uri?, parentFile: File): AppAttachModel?
 internal fun getPathOldVersion(context: Context, uri: Uri?): String? {
   if (uri == null) return null
   val isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
-  val isQorHigher = Build.VERSION.SDK_INT >= 29
+  val isRorHigher = Build.VERSION.SDK_INT >= 30//11
+  val isQ = Build.VERSION.SDK_INT == 29//10
 
   //scooped storage enable(os Q & higher)
-  if (isQorHigher && !Environment.isExternalStorageLegacy()) {
+  if(isRorHigher) return null
+  else if(isQ && !Environment.isExternalStorageLegacy()) return null
+  else
+    /*if (isQ && !Environment.isExternalStorageLegacy()) {
     //TODO support reset file types ,currently : image is supported.
     val des = context!!.contentResolver.openFileDescriptor(uri, "r")//r:Read
     val bitmap = BitmapFactory.decodeFileDescriptor(des?.fileDescriptor)
@@ -283,7 +285,7 @@ internal fun getPathOldVersion(context: Context, uri: Uri?): String? {
       close()
     }
     return temporaryFile.absolutePath
-  } else
+  } else*/
   // DocumentProvider
     if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
       // ExternalStorageProvider
@@ -425,6 +427,40 @@ private fun getInputStreamCopyFilePath(
     } else
       break
   }
+  str.close()
+  fStream.close()
+  return if (outFile.length() <= 0)
+    null
+  else outFile.absolutePath
+}
+private fun getInputStreamCopyFilePath2(
+  context: Context,
+  uri: Uri,
+  info: AppAttachModel?
+): String? {
+  val str = context.contentResolver.openInputStream(uri) ?: return null
+  val suffix = if (info?.extension.isNullOrEmpty() || info?.extension?.startsWith(".") == true)
+    "t_fi" + info?.extension
+  else
+    "t_fi." + info?.extension
+  val outFile = File.createTempFile("pre_", suffix, context.cacheDir)
+  val inBuffer = BufferedInputStream(str)
+  val outBuffer = BufferedOutputStream(FileOutputStream(outFile))
+  val buffer = ByteArray(1024)
+  var result = 0
+  while (true) {
+    result = inBuffer.read(buffer)
+    if (result == -1){
+      outBuffer.flush()
+      break
+    }
+    outBuffer.write(buffer)
+    outBuffer.flush()
+
+  }
+  str.close()
+  inBuffer.close()
+  outBuffer.close()
 
   return if (outFile.length() <= 0)
     null
