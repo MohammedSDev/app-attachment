@@ -44,7 +44,7 @@ class TestFragment : Fragment(){
 
             AppAttachmentDialog(R.layout.attachment_type_dialog_layout,
                 this, AppAttachmentType.ALL)
-                .onResult { code, file ->
+                .onResult { code, file ,a->
                     displasyImage(file)
                 }
                 .prepare {
@@ -82,7 +82,7 @@ class TestFragment : Fragment(){
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        AppAttachmentDialog.onActivityResult(requestCode,resultCode,data,context) { code, file ->
+        AppAttachmentDialog.onActivityResult(requestCode,resultCode,data,context) { code, file,a ->
             //            if()
             displasyImage(file)
             displasyImage(file)
