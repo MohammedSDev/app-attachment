@@ -177,12 +177,20 @@ class AppAttachmentDialog() :
     ) {
       val activityReqCodeMask = 0x0000ffff
       if (resultCode == AppCompatActivity.RESULT_OK) {
+        //isProperlyPickImage: is hot handling/fix. as in andorid 33. requestCode of fragment is different and
+        // 'activityReqCodeMask' mask not work for it.
+        val isProperlyPickImage = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+          && data?.data.toString().contains("content://media/picker"))
+        val isProperlyCameraImage = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+          && data?.data == null)
         when {
           requestCode == OPEN_CAMERA_REQUEST ||
-              requestCode and activityReqCodeMask == OPEN_CAMERA_REQUEST ->
+              requestCode and activityReqCodeMask == OPEN_CAMERA_REQUEST
+              || isProperlyCameraImage->
             onResult.invoke(requestCode, cameraPictureFile, null)
           requestCode == OPEN_GALLARY_REQUEST ||
-              requestCode and activityReqCodeMask == OPEN_GALLARY_REQUEST -> {
+              requestCode and activityReqCodeMask == OPEN_GALLARY_REQUEST
+              || isProperlyPickImage-> {
             if (data == null) {
               onResult.invoke(requestCode, null, null)
               return
@@ -447,6 +455,11 @@ class AppAttachmentDialog() :
   ) {
     val mContext = activity!!
     var deniedPermission: String = ""
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && permission.size == 1 && permission.first() == Manifest.permission.READ_EXTERNAL_STORAGE){
+      callback()
+      return
+    }
     permission.forEach {
       if (ContextCompat.checkSelfPermission(mContext, it)
         != PackageManager.PERMISSION_GRANTED

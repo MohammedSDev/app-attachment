@@ -179,13 +179,18 @@ fun openCamera(
  * @param requestCode the request code
  * @param fragment the host fragment if you call from fragment
  */
+//resources
+//https://medium.com/tech-takeaways/android-13-photo-picker-with-the-activity-result-api-b4a74572e354
+//https://stackoverflow.com/questions/74468281/read-external-storage-is-always-denied-on-android-13-device
 fun openGallery(
   context: Activity,
   requestCode: Int,
   fragment: Fragment? = null,
   isMultiSelection: Boolean = false
 ) {
-  val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+  val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+    Intent(MediaStore.ACTION_PICK_IMAGES)
+  else Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
 //  val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
 //  intent.addCategory(Intent.CATEGORY_OPENABLE)
   intent.type = "image/*"
@@ -266,26 +271,26 @@ internal fun getPathOldVersion(context: Context, uri: Uri?): String? {
   val isQ = Build.VERSION.SDK_INT == 29//10
 
   //scooped storage enable(os Q & higher)
-  if(isRorHigher) return null
-  else if(isQ && !Environment.isExternalStorageLegacy()) return null
+  if (isRorHigher) return null
+  else if (isQ && !Environment.isExternalStorageLegacy()) return null
   else
-    /*if (isQ && !Environment.isExternalStorageLegacy()) {
-    //TODO support reset file types ,currently : image is supported.
-    val des = context!!.contentResolver.openFileDescriptor(uri, "r")//r:Read
-    val bitmap = BitmapFactory.decodeFileDescriptor(des?.fileDescriptor)
-    des?.close()
-    //convert bitmap to file
-    val outputStream = ByteArrayOutputStream()
-    val temporaryFile =
-      File.createTempFile(System.currentTimeMillis().toString(), ".png")
-    bitmap.compress(Bitmap.CompressFormat.PNG, 0, outputStream)
-    FileOutputStream(temporaryFile).run {
-      write(outputStream.toByteArray())
-      flush()
-      close()
-    }
-    return temporaryFile.absolutePath
-  } else*/
+  /*if (isQ && !Environment.isExternalStorageLegacy()) {
+  //TODO support reset file types ,currently : image is supported.
+  val des = context!!.contentResolver.openFileDescriptor(uri, "r")//r:Read
+  val bitmap = BitmapFactory.decodeFileDescriptor(des?.fileDescriptor)
+  des?.close()
+  //convert bitmap to file
+  val outputStream = ByteArrayOutputStream()
+  val temporaryFile =
+    File.createTempFile(System.currentTimeMillis().toString(), ".png")
+  bitmap.compress(Bitmap.CompressFormat.PNG, 0, outputStream)
+  FileOutputStream(temporaryFile).run {
+    write(outputStream.toByteArray())
+    flush()
+    close()
+  }
+  return temporaryFile.absolutePath
+} else*/
   // DocumentProvider
     if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
       // ExternalStorageProvider
@@ -450,7 +455,7 @@ private fun getInputStreamCopyFilePath2(
   var result = 0
   while (true) {
     result = inBuffer.read(buffer)
-    if (result == -1){
+    if (result == -1) {
       outBuffer.flush()
       break
     }
@@ -755,3 +760,17 @@ internal fun checkPermission(
   }
 
 }
+
+//check if the current device supports the Photo Picker
+//private const val ANDROID_R_REQUIRED_EXTENSION_VERSION = 2
+//
+//@SuppressLint("NewApi")
+//fun isPhotoPickerAvailable(): Boolean {
+//  return when {
+//    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> true
+//    Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
+//      getExtensionVersion(Build.VERSION_CODES.R) >= ANDROID_R_REQUIRED_EXTENSION_VERSION
+//    }
+//    else -> false
+//  }
+//}
