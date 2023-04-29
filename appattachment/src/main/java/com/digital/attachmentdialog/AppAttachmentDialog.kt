@@ -177,20 +177,12 @@ class AppAttachmentDialog() :
     ) {
       val activityReqCodeMask = 0x0000ffff
       if (resultCode == AppCompatActivity.RESULT_OK) {
-        //isProperlyPickImage: is hot handling/fix. as in andorid 33. requestCode of fragment is different and
-        // 'activityReqCodeMask' mask not work for it.
-        val isProperlyPickImage = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-          && data?.data.toString().contains("content://media/picker"))
-        val isProperlyCameraImage = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-          && data?.data == null)
         when {
           requestCode == OPEN_CAMERA_REQUEST ||
-              requestCode and activityReqCodeMask == OPEN_CAMERA_REQUEST
-              || isProperlyCameraImage->
+              requestCode and activityReqCodeMask == OPEN_CAMERA_REQUEST->
             onResult.invoke(requestCode, cameraPictureFile, null)
           requestCode == OPEN_GALLARY_REQUEST ||
-              requestCode and activityReqCodeMask == OPEN_GALLARY_REQUEST
-              || isProperlyPickImage-> {
+              requestCode and activityReqCodeMask == OPEN_GALLARY_REQUEST-> {
             if (data == null) {
               onResult.invoke(requestCode, null, null)
               return
@@ -387,9 +379,9 @@ class AppAttachmentDialog() :
     galleryBtn?.setOnClickListener {
       if (Build.VERSION.SDK_INT >= 29 && !config.requestStorageRunTimePermissionForGallery)
         openGallery(
-          activity!!,
+          requireActivity(),
           config?.requestCode ?: OPEN_GALLARY_REQUEST,
-          hostFragment ?: this,
+          hostFragment,
           config.isMultiSelection
         )
       else
@@ -398,9 +390,9 @@ class AppAttachmentDialog() :
           GALLERY_PERMISSION_REQUEST_CODE
         ) {
           openGallery(
-            activity!!,
+            requireActivity(),
             config?.requestCode ?: OPEN_GALLARY_REQUEST,
-            hostFragment ?: this,
+            hostFragment,
             config.isMultiSelection
           )
         }
@@ -421,11 +413,11 @@ class AppAttachmentDialog() :
           "pic_${System.currentTimeMillis()}.jpg"
         )
         openCamera(
-          activity!!,
+          requireActivity(),
           config?.requestCode ?: OPEN_CAMERA_REQUEST,
           authority,
           cameraPictureFile!!,
-          hostFragment ?: this
+          hostFragment
         )
       }
       if (config.dismissAfterClick) dismiss()
@@ -438,9 +430,9 @@ class AppAttachmentDialog() :
       ) {
 
         openFileManager(
-          activity!!,
+          requireActivity(),
           config?.requestCode ?: OPEN_OTHER_REQUEST,
-          hostFragment ?: this
+          hostFragment
         )
       }
       if (config.dismissAfterClick) dismiss()
@@ -453,7 +445,7 @@ class AppAttachmentDialog() :
     permissionCode: Int,
     callback: () -> Unit
   ) {
-    val mContext = activity!!
+    val mContext = requireActivity()
     var deniedPermission: String = ""
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && permission.size == 1 && permission.first() == Manifest.permission.READ_EXTERNAL_STORAGE){
@@ -512,7 +504,7 @@ class AppAttachmentDialog() :
         val lp = WindowManager.LayoutParams()
         lp.copyFrom(it.window!!.attributes)
         lp.height = WindowManager.LayoutParams.WRAP_CONTENT
-        lp.width = (context!!.resources.displayMetrics.widthPixels * 0.91).toInt()
+        lp.width = (requireContext().resources.displayMetrics.widthPixels * 0.91).toInt()
         //set dialog bottom
         lp.gravity = Gravity.CENTER
         it.window?.attributes = lp
