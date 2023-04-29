@@ -16,12 +16,13 @@ import android.os.Environment
 import android.os.Handler
 import android.provider.MediaStore
 import android.util.Log
+import android.view.View
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.content.FileProvider
 import com.bumptech.glide.Glide
 import com.digital.attachmentdialog.*
-import kotlinx.android.synthetic.main.activity_main.*
 import java.io.*
 import java.nio.charset.StandardCharsets
 import java.util.jar.Manifest
@@ -35,16 +36,17 @@ class MainActivity : AppCompatActivity() {
 
 
 
-    tvOne.setOnClickListener {
+    findViewById<View>(R.id.tvOne).setOnClickListener {
 
+      startActivityForResult(Intent(MediaStore.ACTION_PICK_IMAGES),100)
     }
 
-    tvTwo.setOnClickListener {
+    findViewById<View>(R.id.tvTwo).setOnClickListener {
       val f = File(filesDir, "two.jpg")//Okay
       openAttachmentDialog(f)
 //            }
     }
-    tvThree.setOnClickListener {
+    findViewById<View>(R.id.tvThree).setOnClickListener {
       val f = File(getExternalFilesDir(null), "three.jpg")//Okay
       openAttachmentDialog(f)
     }
@@ -136,12 +138,12 @@ class MainActivity : AppCompatActivity() {
 
 //      val myBitmapCompressed = BitmapFactory.decodeFile(comp!!.absolutePath);
 //      saveToInternalStorage(myBitmapCompressed,"comp.jpg")
-      Glide.with(this).load(comp2?.absolutePath).into(image)
+      Glide.with(this).load(comp2?.absolutePath).into(findViewById<ImageView>(R.id.image))
 //          Glide.with(this).load(file.absolutePath).into(image)//failed
       return
       Handler().postDelayed({
         val myBitmap = BitmapFactory.decodeFile(file.absolutePath);
-        image.setImageBitmap(myBitmap)
+        findViewById<ImageView>(R.id.image).setImageBitmap(myBitmap)
         Toast.makeText(this, "image BitmapFactory", Toast.LENGTH_LONG).show()
 
       }, 5000)
@@ -150,7 +152,7 @@ class MainActivity : AppCompatActivity() {
 
         val comp = compressBitmapFile(file.absolutePath, this, 70)
         val bb = BitmapFactory.decodeFile(comp?.absolutePath)
-        image.setImageBitmap(bb)
+        findViewById<ImageView>(R.id.image).setImageBitmap(bb)
         Toast.makeText(this, "image after compress ", Toast.LENGTH_LONG).show()
 
       }, 8000)

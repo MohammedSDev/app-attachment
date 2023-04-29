@@ -6,10 +6,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import com.digital.attachmentdialog.AppAttachmentDialog
 import com.digital.attachmentdialog.AppAttachmentType
-import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 
 class TestFragment : Fragment(){
@@ -27,7 +27,7 @@ class TestFragment : Fragment(){
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        tvOne.setOnClickListener {
+        view.findViewById<View>(R.id.tvOne).setOnClickListener {
 
             val path = "Android/data/.nomedia"
             val f = File(path)
@@ -75,7 +75,7 @@ class TestFragment : Fragment(){
 
             val myBitmap = BitmapFactory.decodeFile(file.absolutePath);
 
-            image.setImageBitmap(myBitmap)
+            view?.findViewById<ImageView>(R.id.image)?.setImageBitmap(myBitmap)
 
         }
     }
