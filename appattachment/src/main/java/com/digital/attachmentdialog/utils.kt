@@ -11,6 +11,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.os.ext.SdkExtensions.getExtensionVersion
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.provider.OpenableColumns
@@ -182,13 +183,14 @@ fun openCamera(
 //resources
 //https://medium.com/tech-takeaways/android-13-photo-picker-with-the-activity-result-api-b4a74572e354
 //https://stackoverflow.com/questions/74468281/read-external-storage-is-always-denied-on-android-13-device
+@SuppressLint("InlinedApi")
 fun openGallery(
   context: Activity,
   requestCode: Int,
   fragment: Fragment? = null,
   isMultiSelection: Boolean = false
 ) {
-  val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+  val intent = if (isPhotoPickerAvailable())
     Intent(MediaStore.ACTION_PICK_IMAGES)
   else Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
 //  val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
@@ -762,15 +764,16 @@ internal fun checkPermission(
 }
 
 //check if the current device supports the Photo Picker
-//private const val ANDROID_R_REQUIRED_EXTENSION_VERSION = 2
+//https://developer.android.com/reference/android/provider/MediaStore#ACTION_PICK_IMAGES
+private const val ANDROID_R_REQUIRED_EXTENSION_VERSION = 2
 //
 //@SuppressLint("NewApi")
-//fun isPhotoPickerAvailable(): Boolean {
-//  return when {
-//    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> true
-//    Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
-//      getExtensionVersion(Build.VERSION_CODES.R) >= ANDROID_R_REQUIRED_EXTENSION_VERSION
-//    }
-//    else -> false
-//  }
-//}
+fun isPhotoPickerAvailable(): Boolean {
+  return when {
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> true
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
+      getExtensionVersion(Build.VERSION_CODES.R) >= ANDROID_R_REQUIRED_EXTENSION_VERSION
+    }
+    else -> false
+  }
+}
